@@ -83,8 +83,12 @@ class RobotConfig(Component):
 
 
 
-    def add_srdf(self) -> None:
-        MoveitReconfigurator(self, False)
+    def generate_moveit_config(self, update=False):
+        moveit_config = MoveitReconfigurator(self, update)
+        srdf = moveit_config.get_srdf()
+        kinematics = moveit_config.kinematics_yaml()
+        joint_limits = moveit_config.get_joint_limits()
+        controllers = moveit_config.get_moveit_controllers()
 
     def add_gripper(self) -> None:
         pass

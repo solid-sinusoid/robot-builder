@@ -70,7 +70,8 @@ class JointNode(Component):
         self.child = child
         self.joint_config = joint_config
         self.multiplier = joint_config.get("multiplier", 0)
-        # self.has_mimic = joint_config.get("has_mimic", False)
+        self.joint_limit: List[float] = joint_config.get("joint_limit", [0, 0])
+        self.max_velocity = joint_config.get("max_velocity", 0)
         self.mimic = joint_config.get("mimic", False)
         self.has_mimic = joint_config.get("has_mimic", False)
         if self.has_mimic:
