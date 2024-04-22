@@ -1,5 +1,7 @@
 import numpy as np
-from utils import *
+from robot_builder.components import JointNode, LinkNode
+from robot_builder.utils import *
+from typing import List
 
 class MoveitReconfigurator:
     def __init__(self, robot_base, update=False):
@@ -10,18 +12,29 @@ class MoveitReconfigurator:
             "controllers": self.rb.robot_package_abs_path + "/config/moveit/moveit_controllers.yaml",
             "joint_limits": self.rb.robot_package_abs_path + "/config/moveit/joint_limits.yaml",
             "initial_positons": self.rb.robot_package_abs_path + "/config/moveit/initial_positons.yaml",
-            "srdf": self.rb.robot_package_abs_path + "/config/moveit/" + self.rb.name + ".srdf"
+            "srdf": self.rb.robot_package_abs_path + "/config/moveit/" + self.rb.robot_type + ".srdf"
         }
 
-    def _get_adjacency_matrix(self, link_connections: dict, link_names:list):
-        adjacency_matrix = np.zeros((len(link_names), len(link_names)), dtype=int)
-        for i, parent_link in enumerate(link_names):
-            if parent_link in link_connections:
-                for child_link in link_connections[parent_link]:
-                    j = link_names.index(child_link)
-                    adjacency_matrix[i, j] = 1
-        return adjacency_matrix
+    def _get_adjacency_matrix(self, joints: List[JointNode], links: List[LinkNode]):
+        node_names = [node.name for node in links]
+        adjacency_matrix = np.zeros((len(node_names), len(node_names)), dtype=int)
+        link_fixed = []
+        link_fixed_parent = []
 
+        for joint in joints:
+            if joint.joint_type == "fixed":
+                link_fixed.append(joint.child)
+                link_fixed_parent.append(joint.parent)
+                if joint.parent in link_fixed:
+                    parent_index = node_names.index(link_fixed_parent[0])
+                    child_index = node_names.index(joint.child)
+                    adjacency_matrix[parent_index, child_index] = 1
+            else:
+                parent_index = node_names.index(joint.parent)
+                child_index = node_names.index(joint.child)
+                adjacency_matrix[parent_index, child_index] = 1
+
+        return adjacency_matrix
 
     def get_joint_limits(self):
         joint_limits = load_yaml_abs(self.moveit_config_files["joint_limits"])
@@ -75,17 +88,19 @@ class MoveitReconfigurator:
         return moveit_controllers
 
     def get_srdf(self):
-        adjm = self._get_adjacency_matrix(self.rb.link_connections, self.rb.links)
-        srdf = Robot(name=self.rb.name)
+        link_names = [link.name for link in self.rb.links]
+        adjm = self._get_adjacency_matrix(self.rb.joints, self.rb.links)
+        srdf = Robot(name=self.rb.robot_type)
         plgr = PlanningGroup(
-            Chain(base_link=self.rb.links[0], tip_link=self.rb.links[-1]),
-            name=self.rb.name
+            Chain(base_link=link_names[0], tip_link=link_names[-1]),
+            name=self.rb.robot_type
         )
         srdf.extend([plgr])
-        for i, parent_link in enumerate(self.rb.links):
-            if parent_link in self.rb.link_connections:
-                for child_link in self.rb.link_connections[parent_link]:
-                    j = self.rb.links.index(child_link)
-                    if adjm[i, j] == 1:
-                        srdf.extend([DisableCollision(link1=parent_link, link2=child_link)])
+        for parent_index, row in enumerate(adjm):
+            for child_index, value in enumerate(row):
+                if value == 1:
+                    parent_link = link_names[parent_index]
+                    child_link = link_names[child_index]
+                    srdf.extend([DisableCollision(link1=parent_link, link2=child_link)])
+
         return srdf

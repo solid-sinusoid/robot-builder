@@ -13,7 +13,7 @@ class HardwareInterface(Element):
 class JointInterface(Element):
     required_attributes = ["name"]
     element_name = "joint"
-    allowed_elements = ["CommandInterface", "StateInterface"]
+    allowed_elements = ["CommandInterface", "StateInterface", "Param"]
 
 class CommandInterface(Element):
     required_attributes = ["name"]
@@ -70,6 +70,18 @@ class VirtualJoint(Element):
 
 Group.allowed_elements += [ "Ros2Control", "VirtualJoint", "PlanningGroup", "PlanningGroupState", "DisableCollision" ]
 Robot.allowed_elements += [ "Ros2Control", "VirtualJoint", "PlanningGroup", "PlanningGroupState", "DisableCollision" ]
+
+class Namespace(Element):
+    element_name = "namespace"
+
+class Parameters(Element):
+    element_name = "parameters"
+
+class Ros(Element):
+    element_name = "ros"
+    allowed_elements = ["Namespace"]
+
+Plugin.allowed_elements += ["Parameters", "Ros"]
 
 class VerboseSafeDumper(yaml.SafeDumper):
     def ignore_aliases(self, data):
