@@ -108,8 +108,4 @@ class MoveitReconfigurator:
                     parent_link = link_names[parent_index]
                     child_link = link_names[child_index]
                     srdf.extend([DisableCollision(link1=parent_link, link2=child_link)])
-        if self.update:
-            with open(self.moveit_config_files["srdf"], 'w') as xfile:
-                xfile.write(srdf.urdf())
-                xfile.close()
         return srdf
