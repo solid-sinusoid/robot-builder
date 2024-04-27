@@ -25,6 +25,7 @@ class RobotConfig(Component):
         self.fixed_links: List[LinkNode] = []
         self.fixed_joints: List[JointNode] = []
         self.robot_joints: List[JointNode] = []
+        self.this_robot_joints: List[JointNode] = []
 
         self.group: Group = Group()
         self.robot_package_abs_path: str = get_package_share_directory(self.robot_type)
@@ -39,9 +40,10 @@ class RobotConfig(Component):
         if isinstance(component, JointNode) and component.parent != "world":
             if component.joint_type != "fixed":
                 self.joints.append(component)
-                self.robot_joints.append(component)
+                self.this_robot_joints.append(component)
             else:
                 self.fixed_joints.append(component)
+            self.robot_joints.append(component)
         elif isinstance(component, LinkNode):
             self.links.append(component)
         elif isinstance(component, RobotConfig):
@@ -88,6 +90,7 @@ class RobotConfig(Component):
         kinematics = moveit_config.kinematics_yaml()
         joint_limits = moveit_config.get_joint_limits()
         controllers = moveit_config.get_moveit_controllers()
+        initial_positions = moveit_config.get_initial_positions()
 
     def add_gripper(self) -> None:
         pass
@@ -106,7 +109,7 @@ class RobotConfig(Component):
                     Parameters(
                         xmltext=f"{self.robot_package_abs_path}/config/{self.component_name}.yaml"
                     ),
-                    Ros(Namespace(xmltext=f"/{self.component_name}")),
+                    # Ros(Namespace(xmltext=f"/{self.component_name}")), #TODO: enable Namespace
                     filename="libign_ros2_control-system.so",
                     name="ign_ros2_control::IgnitionROS2ControlPlugin"))
             self.group.extend([simulation])
@@ -116,6 +119,7 @@ class RobotConfig(Component):
     def merge_children(self) -> None:
         for child in self.children:
             self.links.extend(child.links)
+            self.robot_joints.extend(child.robot_joints)
             self.joints.extend(child.joints)
             self.components.extend(child.components)
 

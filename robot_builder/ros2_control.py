@@ -7,7 +7,9 @@ class ControllerManager():
     def __init__(self, robot_base, config: dict):
         self.rb = robot_base
         self.config = config
-        self.non_fixed_joints = [joint.name for joint in robot_base.robot_joints if joint.joint_type != "fixed"]
+        self.non_fixed_joints = [joint.name for joint in robot_base.this_robot_joints if joint.joint_type != "fixed"]
+        if robot_base.children:
+            self.non_fixed_joints.append(robot_base.children[0].robot_joints[1].name) #FIXME: this is hardcode
         self.all_joints = [joint.name for joint in robot_base.joints]
         self.links = [link.name for link in robot_base.links]
         self.is_gripper = self.config.get("gripper_controller", False)
@@ -112,6 +114,6 @@ class ControllerManager():
         }
 
     def save_to_yaml(self, filename, robot_name):
-        robot_config = self.generate_robot_config(robot_name)
+        robot_config = self.generate_robot_config() #TODO: add robot name for namespace
         filepath = f"{self.rb.robot_package_abs_path}/config/{filename}"
         write_yaml_abs(robot_config, filepath)
