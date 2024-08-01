@@ -3,6 +3,7 @@ from odio_urdf import Element, Mimic
 from odio_urdf import Link, Inertia, Inertial, Mass, Origin, Mesh, Visual, Collision, Geometry
 from odio_urdf import Joint, Parent, Child, Axis, Limit
 from typing import Optional
+import shutil
 
 class Component:
     def __init__(self, name: str) -> None:
@@ -14,11 +15,12 @@ class Component:
 
 class LinkNode(Component):
     def __init__(self, 
-                 N: Optional[int], 
-                 robot_name: Optional[str], 
-                 link_config: Optional[dict], 
-                 link_name: Optional[str] = None, 
-                 package_path: Optional[str] = None) -> None:
+                 N: int | None, 
+                 robot_name: str | None, 
+                 link_config: dict | None, 
+                 link_name: str | None = None, 
+                 package_path: str | None = None,
+                 save_geometry_path: str | None = None) -> None:
         if link_name == "world":
             name = link_name
         elif link_name in ("tool0", "grasp_point"):
@@ -29,6 +31,16 @@ class LinkNode(Component):
         self.link_name = link_name
         self.link_config = link_config
         self.package_path = package_path
+        if link_config is not None and link_config.get("mesh_name", ""):
+            self.visual_mesh_package_path = f"{self.package_path}/meshes/visual/{self.link_config['mesh_name']}.dae"
+            self.collision_mesh_package_path = f"{self.package_path}/meshes/collision/{self.link_config['mesh_name']}.stl"
+            if save_geometry_path is not None:
+                self.visual_mesh_save_path = f"{save_geometry_path}/{self.link_config['mesh_name']}.dae"
+                self.collision_mesh_save_path = f"{save_geometry_path}/{self.link_config['mesh_name']}.stl"
+            else:
+                self.visual_mesh_save_path = self.visual_mesh_package_path
+                self.collision_mesh_save_path = self.collision_mesh_package_path
+
         self.robot_name = robot_name
 
     @property
@@ -36,7 +48,7 @@ class LinkNode(Component):
         return self.component_name
 
     def get_urdf(self) -> Element:
-        if self.link_name in ("world", "tool0", "grasp_point"):
+        if not self.link_config:
             return Link(name=self.component_name)
 
         ret = Link(
@@ -47,12 +59,12 @@ class LinkNode(Component):
             ),
             Visual(
                 Geometry(
-                    Mesh(filename=f"file://{self.package_path}/meshes/visual/{self.link_config['mesh_name']}.dae")
+                    Mesh(filename=f"file://{self.visual_mesh_save_path}")
                 ),
             ),
             Collision(
                 Geometry(
-                    Mesh(filename=f"file://{self.package_path}/meshes/collision/{self.link_config['mesh_name']}.stl")
+                    Mesh(filename=f"file://{self.visual_mesh_save_path}")
                 )
             ),
             name=self.component_name

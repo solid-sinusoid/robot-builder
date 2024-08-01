@@ -1,6 +1,6 @@
+import importlib
 from typing import List, Optional
 
-from ament_index_python.packages import get_package_share_directory
 from odio_urdf import *
 
 from robot_builder.components import Component, JointNode, LinkNode
@@ -8,18 +8,28 @@ from robot_builder.moveit import MoveitReconfigurator
 from robot_builder.ros2_control import ControllerManager
 from robot_builder.utils import *
 
-
 HARDWARE = {"gazebo": "ign_ros2_control/IgnitionSystem"}
 
 class RobotConfig(Component):
-    def __init__(self, robot_name: str, robot_type: str, parent: str) -> None:
+    def __init__(self, robot_name: str, robot_type: str, parent: str = "world") -> None:
+        """
+        Args:
+            robot_name: Name of a robot in scene and also the prefix for ROS workspace
+            robot_type: Robot type to find the robot package
+            parent: Parent link. Default is world
+            absolute_path: Optional. If used then in meshes will be this path
+        """
         super().__init__(robot_name)
+
+        # Parts to store parts of builded robot config data
         self.parts: List[str] = []
         self.robot_type: str = robot_type
         self.parent: str = parent
         self.children: List[RobotConfig] = []
         self.components: List[Component] = []
 
+        # Store useuful data to build the robot config
+        # TODO: Use dataclasses to store information
         self.links: List[LinkNode] = []
         self.joints: List[JointNode] = []
         self.fixed_links: List[LinkNode] = []
@@ -28,29 +38,36 @@ class RobotConfig(Component):
         self.this_robot_joints: List[JointNode] = []
 
         self.group: Group = Group()
-        self.robot_package_abs_path: str = get_package_share_directory(self.robot_type)
+        self.robot_package_abs_path: str = ""
+        
+        get_package = importlib.import_module("ament_index_python.packages")
+        self.robot_package_abs_path = get_package.get_package_share_directory(robot_type)
+
+        # Load robot config which should be in specific place in the package directory
         self.robot_config: dict = load_yaml_abs(f"{self.robot_package_abs_path}/config/robot_config.yaml")
-        self.group_link_joint: Dict[str, List[str]] = {key: [] for key in self.robot_config.keys()}
-        self.ros2_control_config: Dict[str, Union[str, dict]] = {}
+        self.group_link_joint: dict[str, list[str]] = {key: [] for key in self.robot_config.keys()}
+        self.ros2_control_config: dict[str, (str | dict | int | float)] = {}
 
     def add_part(self, part: str) -> None:
         self.parts.append(part)
 
     def add(self, component: Component) -> None:
-        if isinstance(component, JointNode) and component.parent != "world":
-            if component.joint_type != "fixed":
-                self.joints.append(component)
-                self.this_robot_joints.append(component)
-            else:
-                self.fixed_joints.append(component)
-            self.robot_joints.append(component)
-        elif isinstance(component, LinkNode):
-            self.links.append(component)
-        elif isinstance(component, RobotConfig):
-            self.children.append(component)
-        
-        if isinstance(component, (LinkNode, JointNode)):
-            self.components.append(component)
+        match component:
+            case JointNode() if component.parent != "world":
+                if component.joint_type != "fixed":
+                    self.joints.append(component)
+                    self.this_robot_joints.append(component)
+                else:
+                    self.fixed_joints.append(component)
+                self.robot_joints.append(component)
+                self.components.append(component)
+            case LinkNode():
+                self.links.append(component)
+                self.components.append(component)
+            case RobotConfig():
+                self.children.append(component)
+            case _:
+                pass
 
     def add_interface(self, interface: str, type: Optional[str] = "actuator") -> None:
         interface_xml = HARDWARE.get(interface)
@@ -99,10 +116,10 @@ class RobotConfig(Component):
         cm = ControllerManager(self, config)
         cm.save_to_yaml(f"{robot_name}.yaml", robot_name)
 
-    def add_group(self) -> None:
-        self.robot.extend([self.group])
+    # def add_group(self) -> None:
+    #     self.robot.extend([self.group])
 
-    def add_simulation(self, simulator: str) -> None:
+    def add_simulation(self, simulator: str | None) -> None:
         if simulator in HARDWARE:
             simulation = Gazebo(
                 Plugin(
@@ -135,6 +152,25 @@ class RobotConfig(Component):
         print("Robot joints: ")
         for joint in self.joints:
             print(joint.name)
+
+    def get_geometry(self, visual: bool = False, collision: bool = False) -> tuple[List, List]:
+        """
+        Args:
+            visual: if true then store visual mesh paths 
+            collision:  if true then store collision mesh paths
+
+        Returns:
+            visual_mesh_path_list
+            collision_mesh_path_list
+        """
+        visual_mesh_path_list = []
+        collision_mesh_path_list = []
+        for link in self.links:
+            if visual and link.link_config:
+                visual_mesh_path_list.append(link.visual_mesh_package_path)
+            if collision and link.link_config:
+                collision_mesh_path_list.append(link.collision_mesh_package_path)
+        return (visual_mesh_path_list, collision_mesh_path_list)
 
     def urdf(self) -> Robot:
         for component in self.components:
