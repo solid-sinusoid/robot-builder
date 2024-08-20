@@ -1,0 +1,152 @@
+<?xml version='1.0' encoding='ASCII'?>
+<robot name="robot1">
+  <link name="world"/>
+  <link name="robot1_base_link_0">
+    <inertial>
+      <origin xyz="-0.000297002857922682 0.0964721185617698 -0.000361033370053684" rpy="0.0 0.0 0.0"/>
+      <mass value="1.88031044620482"/>
+      <inertia ixx="0.00503302470272442" ixy="0.000343817346410954" ixz="-4.74990755448368e-06" iyy="0.00337962410057753" iyz="-2.3099255620051e-05" izz="0.00405858207282473"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="base_link.dae" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="base_link.stl" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="robot1_fork_link_1">
+    <inertial>
+      <origin xyz="-9.7531539777207e-06 -0.000888494418875867 0.0342332199538358" rpy="0.0 0.0 0.0"/>
+      <mass value="1.88031044620482"/>
+      <inertia ixx="0.00147695259043549" ixy="-2.66894744420299e-05" ixz="-4.40871314563273e-05" iyy="0.00135500487881796" iyz="-3.19001462979333e-05" izz="0.00087582892706912"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="fork_link.dae" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="fork_link.stl" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="robot1_main_link_2">
+    <inertial>
+      <origin xyz="-9.7531539777207e-06 -0.000888494418875867 0.0342332199538358" rpy="0.0 0.0 0.0"/>
+      <mass value="1.88031044620482"/>
+      <inertia ixx="0.00147695259043549" ixy="-2.66894744420299e-05" ixz="-4.40871314563273e-05" iyy="0.00135500487881796" iyz="-3.19001462979333e-05" izz="0.00087582892706912"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="main_link.dae" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="main_link.stl" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="robot1_fork_link_3">
+    <inertial>
+      <origin xyz="-9.7531539777207e-06 -0.000888494418875867 0.0342332199538358" rpy="0.0 0.0 0.0"/>
+      <mass value="1.88031044620482"/>
+      <inertia ixx="0.00147695259043549" ixy="-2.66894744420299e-05" ixz="-4.40871314563273e-05" iyy="0.00135500487881796" iyz="-3.19001462979333e-05" izz="0.00087582892706912"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="fork_link.dae" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="fork_link.stl" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="robot1_main_link_4">
+    <inertial>
+      <origin xyz="-9.7531539777207e-06 -0.000888494418875867 0.0342332199538358" rpy="0.0 0.0 0.0"/>
+      <mass value="1.88031044620482"/>
+      <inertia ixx="0.00147695259043549" ixy="-2.66894744420299e-05" ixz="-4.40871314563273e-05" iyy="0.00135500487881796" iyz="-3.19001462979333e-05" izz="0.00087582892706912"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="main_link.dae" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="main_link.stl" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="robot1_ee_link_5">
+    <inertial>
+      <origin xyz="-9.7531539777207e-06 -0.000888494418875867 0.0342332199538358" rpy="0.0 0.0 0.0"/>
+      <mass value="1.88031044620482"/>
+      <inertia ixx="0.00147695259043549" ixy="-2.66894744420299e-05" ixz="-4.40871314563273e-05" iyy="0.00135500487881796" iyz="-3.19001462979333e-05" izz="0.00087582892706912"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="ee_link.dae" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="ee_link.stl" scale="1.0 1.0 1.0"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="robot1_tool0_6"/>
+  <joint type="fixed">
+    <parent link="world"/>
+    <child link="robot1_base_link_0"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+  </joint>
+  <joint type="revolute">
+    <parent link="robot1_base_link_0"/>
+    <child link="robot1_fork_link_1"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="78" velocity="0.52" lower="-3.14159" upper="3.14159"/>
+  </joint>
+  <joint type="revolute">
+    <parent link="robot1_fork_link_1"/>
+    <child link="robot1_main_link_2"/>
+    <origin xyz="0.1 0.0 0.094" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="78" velocity="0.52" lower="-1.5708" upper="3.14159"/>
+  </joint>
+  <joint type="revolute">
+    <parent link="robot1_main_link_2"/>
+    <child link="robot1_fork_link_3"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="78" velocity="0.52" lower="-3.14159" upper="3.14159"/>
+  </joint>
+  <joint type="revolute">
+    <parent link="robot1_fork_link_3"/>
+    <child link="robot1_main_link_4"/>
+    <origin xyz="0.1 0.0 0.094" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="78" velocity="0.52" lower="-1.5708" upper="3.14159"/>
+  </joint>
+  <joint type="revolute">
+    <parent link="robot1_main_link_4"/>
+    <child link="robot1_ee_link_5"/>
+    <origin xyz="0.1 0.0 0.094" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="78" velocity="0.52" lower="-1.5708" upper="3.14159"/>
+  </joint>
+  <joint type="fixed">
+    <parent link="robot1_ee_link_5"/>
+    <child link="robot1_tool0_6"/>
+    <origin xyz="0.0 0.0 0.11" rpy="0.0 0.0 0.0"/>
+  </joint>
+</robot>

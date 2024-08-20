@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Any, List
-
-from robot_builder.urdf import Group, Joint, Link, Material
+from typing import Any
+from robot_builder.base import Robot
 
 class RobotBuilderABC(ABC):
     @property
     @abstractmethod
-    def robot(self) -> Any:
+    def robot(self) -> Robot:
         pass
 
     @abstractmethod
