@@ -1,5 +1,6 @@
 from dataclasses import field
 from pydantic.dataclasses import dataclass
+from lxml import etree
 
 # from loguru import logger
 import numpy as np
@@ -8,6 +9,20 @@ from .base import Component, Visitor
 from .ros2_control_interface import Ros2Control
 from .joint import Joint
 from .link import Link, Material
+from .gazebo import Gazebo
+
+# @dataclass(eq=False)
+# class Group(Component):
+#     links: list[Link] = field(default_factory=list)
+#     joints: list[Joint] = field(default_factory=list)
+#     materials: list[Material] = field(default_factory=list)
+#     gazebo: list[str] = field(default_factory=list)
+#     control: list[Ros2Control] = field(default_factory=list)
+#
+#     def visit(self, config: etree._Element | dict, visitor: Visitor):
+#         return super().visit(config, visitor)
+
+
 
 
 @dataclass(eq=False)
@@ -16,8 +31,8 @@ class Robot(Component):
     links: list[Link] = field(default_factory=list)
     joints: list[Joint] = field(default_factory=list)
     materials: list[Material] = field(default_factory=list)
-    gazebo: list[str] = field(default_factory=list)
     control: list[Ros2Control] = field(default_factory=list)
+    gazebo: list[Gazebo] = field(default_factory=list)
 
     @property
     def link_map(self) -> dict:
@@ -75,6 +90,22 @@ class Robot(Component):
     def base_link(self):
         return self._base_link
 
+    @property
+    def ee_link(self):
+        return self._ee_link
+
+    @property
+    def get_gripper_joint_names(self) -> list:
+        return self._gripper_joint_names
+
+    @property
+    def get_gripper_joint(self) -> list[Joint]:
+        return self._gripper_joint
+
+    @property
+    def get_gripper_mimic_joint_name(self):
+        return self._gripper_mimic_joint_name
+
     def _determine_base_link(self) -> str | None:
         link_names = [l.name for l in self.links]
         for j in self.joints:
@@ -84,7 +115,17 @@ class Robot(Component):
             return None
         return link_names[0]
 
+    def _determine_ee_link(self) -> str | None:
+        link_names = [l.name for l in self.links]
+        # for j in self.joints:
+        #     if j.parent is not None:
+        #         link_names.remove(j.parent)
+        # if len(link_names) == 0:
+        #     return None
+        return link_names[-1]
+
     def _create_maps(self):
+        self._control_map = {c.name: c for c in self.control}
         self._material_map = {m.name: m for m in self.materials}
         self._joint_map = {j.name: j for j in self.joints}
         self._link_map = {l.name: l for l in self.links}
@@ -124,6 +165,36 @@ class Robot(Component):
     #         and set(self.control) == set(other.control)
     #     )
 
+    def _split_gripper(self, gripper_keyname: str | None = None):
+        self._gripper_link = []
+        self._gripper_link_names = []
+        self._gripper_joints = []
+        self._gripper_joint_names = []
+        for link in self.links:
+            name = link.name.split('_')
+            if gripper_keyname in name:
+                self._gripper_link.append(link)
+                self._gripper_link_names.append(link.name)
+        for joint in self.joints:
+            name = joint.name.split('_')
+            if gripper_keyname in name:
+                self._gripper_joints.append(joint)
+                self._gripper_joint_names.append(joint.name)
+                if joint.mimic:
+                    mimic_actuated_joint = joint.mimic.joint
+                    if mimic_actuated_joint is not None:
+                        self.joints.remove(self._joint_map[mimic_actuated_joint])
+                        self._gripper_mimic_joint_name = joint.mimic.joint
+                        self._gripper_mimic_joint = self._joint_map[mimic_actuated_joint]
+                    else:
+                        raise ValueError("Determine mimic joint name")
+        # for control in self._control_map:
+        #     c = self._control_map[control]
+        #     name = c.name.split('_')
+        #     if "gripper" in name:
+        #         self.gripper.control.append(c)
+        #         self.control.remove(c)
+
     def extend(self, other: 'Robot'):
         self.links.extend(other.links)
         self.joints.extend(other.joints)
@@ -131,9 +202,23 @@ class Robot(Component):
         self.gazebo.extend(other.gazebo)
         self.control.extend(other.control)
 
-    def visit(self, config, visitor: Visitor):
-        visitor.visit_robot(config, self)
+    def init(self):
         self._create_maps()
+        self._split_gripper("gripper")
         self._update_actuated_joints()
         self._base_link = self._determine_base_link()
+        self._ee_link = self._determine_ee_link()
         self._cfg = self.zero_cfg
+
+        self.parallel_gripper = False
+        self.multifinger_gropper = False
+
+        if self._gripper_joint_names and self._gripper_mimic_joint_name:
+            self.parallel_gripper = True
+
+        elif self._gripper_joint_names and not self._gripper_mimic_joint_name:
+            self.multifinger_gropper = True
+
+    def visit(self, config, visitor: Visitor):
+        visitor.visit_robot(config, self)
+

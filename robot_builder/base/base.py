@@ -1,8 +1,9 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 # from dataclasses import dataclass
+from lxml.etree import Element
 from pydantic.dataclasses import dataclass
-from pydantic import ConfigDict
+from pydantic import ConfigDict, config
 
 from typing import TYPE_CHECKING, get_type_hints, get_origin, get_args
 
@@ -11,6 +12,7 @@ if TYPE_CHECKING:
     from .robot import *
     from .joint import *
     from .ros2_control_interface import *
+    from .gazebo import *
 
 
 
@@ -110,6 +112,35 @@ class Visitor(ABC):
 
     @abstractmethod
     def visit_param(self, config: etree._Element | dict, element: Param): pass
+
+    #INFO: Gazebo part
+
+    @abstractmethod
+    def visit_gazebo(self, config: etree._Element | dict, element: Gazebo): pass
+
+    @abstractmethod
+    def visit_gz_visual(self, config: etree._Element | dict, element: GzVisual): pass
+
+    @abstractmethod
+    def visit_gz_material(self, config: etree._Element | dict, element: GzMaterial): pass
+
+    @abstractmethod
+    def visit_gz_sensor(self, config: etree._Element | dict, element: GzSensor): pass
+
+    @abstractmethod
+    def visit_gz_plugin(self, config: etree._Element | dict, element: GzPlugin): pass
+
+    @abstractmethod
+    def visit_gz_ros(self, config: etree._Element | dict, element: GzRos): pass
+
+    @abstractmethod
+    def visit_gz_fts(self, config: etree._Element | dict, element: GzFts): pass
+
+    @abstractmethod
+    def visit_gz_pbr_metal(self, config: etree._Element | dict, element: GzPbrMetal): pass
+
+    @abstractmethod
+    def visit_gz_pbr(self, config: etree._Element | dict, element: GzPbr): pass
 
 
 
