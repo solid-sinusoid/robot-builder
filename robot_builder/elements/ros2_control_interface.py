@@ -1,8 +1,9 @@
-from dataclasses import field
-from pydantic.dataclasses import dataclass
+from dataclasses import dataclass, field
+
 from lxml import etree
 
-from .base import Component, Visitor
+from ..base import Component, Visitor
+
 
 @dataclass
 class Param(Component):
@@ -21,6 +22,7 @@ class Hardware(Component):
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_hardware(config, self)
 
+
 @dataclass
 class CommandInterface(Component):
     name: str
@@ -28,6 +30,7 @@ class CommandInterface(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_command_interface(config, self)
+
 
 @dataclass
 class StateInterface(Component):
@@ -47,6 +50,7 @@ class Sensor(Component):
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_sensor(config, self)
 
+
 @dataclass
 class JointInterface(Component):
     name: str
@@ -55,6 +59,7 @@ class JointInterface(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_joint_interface(config, self)
+
 
 @dataclass
 class Ros2Control(Component):
@@ -66,4 +71,3 @@ class Ros2Control(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_ros2_control(config, self)
-

@@ -1,15 +1,19 @@
 import os
-from typing import Type
-import six
-import numpy as np
 from functools import partial
-from robot_builder.base import *
-from loguru import logger
-import toml
+from typing import Type
 
+import numpy as np
+import six
+import toml
+from loguru import logger
 from lxml import etree
 
+from ..base import Component, Visitor
+from ..elements import *
+from ..utils import filename_handler_magic
+
 # _logger = logging.getLogger(__name__)
+
 
 class RobotConfigParser(Visitor):
     def __init__(
@@ -63,7 +67,6 @@ class RobotConfigParser(Visitor):
 
         return robots_lst[0]
 
-
     def visit_mimic(self, config: etree._Element | dict, element: Mimic):
         if not isinstance(config, dict):
             return NotImplemented
@@ -72,7 +75,9 @@ class RobotConfigParser(Visitor):
         element.multiplier = config.get("multiplier", 1.0)
         element.offset = config.get("offset", 0.0)
 
-    def visit_safety_controller(self, config: etree._Element | dict, element: SafetyController):
+    def visit_safety_controller(
+        self, config: etree._Element | dict, element: SafetyController
+    ):
         if not isinstance(config, dict):
             return NotImplemented
 
@@ -89,12 +94,9 @@ class RobotConfigParser(Visitor):
             case list():
                 element.size = np.array(box_size)
             case dict():
-                element.size = np.array([
-                    box_size.get('x'),
-                    box_size.get('y'),
-                    box_size.get('z')
-                ])
-                
+                element.size = np.array(
+                    [box_size.get("x"), box_size.get("y"), box_size.get("z")]
+                )
 
     def visit_cylinder(self, config: etree._Element | dict, element: Cylinder):
         if not isinstance(config, dict):
@@ -116,9 +118,9 @@ class RobotConfigParser(Visitor):
             case list():
                 element.scale = np.array(value)
             case dict():
-                element.scale = np.array([
-                    value.get('x'), value.get('y'), value.get('z')
-                ])
+                element.scale = np.array(
+                    [value.get("x"), value.get("y"), value.get("z")]
+                )
             case float():
                 element.scale = value
             case _:
@@ -156,16 +158,16 @@ class RobotConfigParser(Visitor):
         position = config.get("position", {})
         orientation = config.get("orientation", {})
 
-        element.xyz = np.array([
-            position.get("x", 0.0),
-            position.get("y", 0.0),
-            position.get("z", 0.0)
-        ])
-        element.rpy = np.array([
-            orientation.get("x", 0.0),
-            orientation.get("y", 0.0),
-            orientation.get("z", 0.0)
-        ])
+        element.xyz = np.array(
+            [position.get("x", 0.0), position.get("y", 0.0), position.get("z", 0.0)]
+        )
+        element.rpy = np.array(
+            [
+                orientation.get("x", 0.0),
+                orientation.get("y", 0.0),
+                orientation.get("z", 0.0),
+            ]
+        )
 
     def visit_color(self, config: etree._Element | dict, element: Color):
         if not isinstance(config, dict):
@@ -206,7 +208,7 @@ class RobotConfigParser(Visitor):
     def visit_inertia(self, config: etree._Element | dict, element: Inertia):
         if not isinstance(config, dict):
             return NotImplemented
-        element.inertia_tensor =  np.array(
+        element.inertia_tensor = np.array(
             [
                 [
                     config.get("ixx", 1.0),
@@ -243,7 +245,7 @@ class RobotConfigParser(Visitor):
     def visit_link(self, config: etree._Element | dict, element: Link):
         if not isinstance(config, dict):
             return NotImplemented
-        
+
         self.visit_and_add(config.get("inertial", None), Inertial, element)
         self.visit_and_add(config.get("geometry", None), Visual, element)
         self.visit_and_add(config.get("geometry", None), Collision, element)
@@ -254,14 +256,13 @@ class RobotConfigParser(Visitor):
         xyz = config.get("xyz", [1, 0, 0])
         element.axis = np.array(xyz)
 
-
     def visit_limit(self, config: etree._Element | dict, element: Limit):
         if not isinstance(config, dict):
             return NotImplemented
-        element.effort=config.get("max_effort", None)
-        element.velocity=config.get("max_velocity", None)
-        element.lower=config.get("lower", None)
-        element.upper=config.get("upper", None)
+        element.effort = config.get("max_effort", None)
+        element.velocity = config.get("max_velocity", None)
+        element.lower = config.get("lower", None)
+        element.upper = config.get("upper", None)
 
     def visit_dynamics(self, config: etree._Element | dict, element: Dynamics):
         if not isinstance(config, dict):
@@ -288,11 +289,12 @@ class RobotConfigParser(Visitor):
             self.visit_and_add(config.get("dynamics", None), Dynamics, element)
             self.visit_and_add(config.get("mimic", None), Mimic, element)
             self.visit_and_add(config.get("calibration", None), Calibration, element)
-            self.visit_and_add(config.get("safety_controller", None), SafetyController, element)
+            self.visit_and_add(
+                config.get("safety_controller", None), SafetyController, element
+            )
 
         element.parent = self.robot.links[-2].name
         element.child = self.robot.links[-1].name
-
 
     def visit_robot(self, config: etree._Element | dict, element: Robot):
         if not isinstance(config, dict):
@@ -318,7 +320,7 @@ class RobotConfigParser(Visitor):
             else:
                 link.visit(config["anchor"][l_name], self)
 
-            #TODO: A better way to do this choise
+            # TODO: A better way to do this choise
             # If i = 0 then create joint from robot parent to robot root
             if i == 0:
                 joint = Joint(name=f"{element.name}_{parent}_{link.name}_{i}_joint")
@@ -345,10 +347,11 @@ class RobotConfigParser(Visitor):
         # for m in config.findall("material"):
         #     robot.materials.append(URDF._visit_material(m))
 
-    def visit_and_add(self, config: etree._Element | dict, child: Type[Component], parent: Component):
+    def visit_and_add(
+        self, config: etree._Element | dict, child: Type[Component], parent: Component
+    ):
         if not isinstance(config, dict):
             return NotImplemented
         component = child()
         parent.add(component)
         component.visit(config, self)
-

@@ -1,8 +1,9 @@
 from dataclasses import field
 from pydantic.dataclasses import dataclass
-from .base import Component, Visitor
+from ..base import Component, Visitor
 
 from lxml import etree
+
 
 @dataclass
 class GzPbrMetal(Component):
@@ -14,12 +15,14 @@ class GzPbrMetal(Component):
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_gz_pbr_metal(config, self)
 
+
 @dataclass
 class GzPbr(Component):
     metal: GzPbrMetal | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_gz_pbr(config, self)
+
 
 @dataclass
 class GzMaterial(Component):
@@ -29,9 +32,10 @@ class GzMaterial(Component):
     lighting: bool | None = None
     emissive: list[float] = field(default_factory=list)
     pbr: GzPbr | None = None
-    
+
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_gz_material(config, self)
+
 
 @dataclass
 class GzVisual(Component):
@@ -39,6 +43,7 @@ class GzVisual(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_gz_visual(config, self)
+
 
 @dataclass
 class GzFts(Component):
@@ -48,18 +53,20 @@ class GzFts(Component):
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_gz_fts(config, self)
 
+
 @dataclass
 class GzSensor(Component):
     name: str
     type: str
     always_on: bool | None = None
     update_rate: int | None = None
-    visualize: bool | None  = None
+    visualize: bool | None = None
     topic: str | None = None
     force_torque: GzFts | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_gz_sensor(config, self)
+
 
 @dataclass
 class GzRos(Component):
@@ -67,6 +74,7 @@ class GzRos(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_gz_ros(config, self)
+
 
 @dataclass
 class GzPlugin(Component):
@@ -77,6 +85,7 @@ class GzPlugin(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_gz_plugin(config, self)
+
 
 @dataclass
 class Gazebo(Component):

@@ -1,30 +1,50 @@
 import os
-import numpy as np
 from functools import partial
+
 from loguru import logger
-from .exeption import URDFIncompleteError, URDFAttributeValueError
-import yaml
 
-def array_eq(arr1, arr2):
-    if arr1 is None and arr2 is None:
-        return True
-    return (
-        isinstance(arr1, np.ndarray)
-        and isinstance(arr2, np.ndarray)
-        and arr1.shape == arr2.shape
-        and (arr1 == arr2).all()
-    )
 
-def str2float(s):
-    """Cast string to float if it is not None. Otherwise return None.
+def update_mesh_dir(old_path, new_directory):
+    """
+    Updates the file's directory by moving the file from the old path to the new directory,
+    keeping the original file name intact.
 
     Args:
-        s (str): String to convert or None.
+        old_path (str): The current file path.
+        new_directory (str): The new directory path where the file should be moved.
 
     Returns:
-        str or NoneType: The converted string or None.
+        str: The updated file path.
+
+    Raises:
+        FileNotFoundError: If the file at the old path does not exist.
+        NotADirectoryError: If the new directory path is not a directory.
+        Exception: For any other issues that arise during the file move.
     """
-    return float(s) if s is not None else None
+    if not os.path.isfile(old_path):
+        raise FileNotFoundError(f"The file at {old_path} does not exist.")
+
+    if not os.path.isdir(new_directory):
+        raise NotADirectoryError(
+            f"The specified path is not a directory: {new_directory}"
+        )
+
+    # Get the file name from the old path
+    file_name = os.path.basename(old_path)
+
+    # Construct the new path by combining the new directory and the file name
+    new_path = os.path.join(new_directory, file_name)
+
+    if os.path.isfile(new_path):
+        raise FileExistsError(f"A file already exists at the new path: {new_path}")
+
+    try:
+        os.rename(old_path, new_path)
+    except Exception as e:
+        raise Exception(f"An error occurred while moving the file: {e}")
+
+    return new_path
+
 
 def filename_handler_null(fname):
     """A lazy filename handler that simply returns its input.
@@ -172,55 +192,3 @@ def filename_handler_magic(fname, dir):
         ]
         + _create_filename_handlers_to_urdf_file_recursive(urdf_fname=dir),
     )
-
-
-def validation_handler_strict(errors):
-    """A validation handler that does not allow any errors.
-
-    Args:
-        errors (list[yourdfpy.URDFError]): List of errors.
-
-    Returns:
-        bool: Whether any errors were found.
-    """
-    return len(errors) == 0
-
-
-def validate_required_attribute(errors_list, attribute, error_msg, allowed_values=None):
-    if attribute is None:
-        errors_list.append(URDFIncompleteError(error_msg))
-    elif isinstance(attribute, str) and len(attribute) == 0:
-        errors_list.append(URDFIncompleteError(error_msg))
-
-    if allowed_values is not None and attribute is not None:
-        if attribute not in allowed_values:
-            errors_list.append(URDFAttributeValueError(error_msg))
-            pass
-
-
-class VerboseSafeDumper(yaml.SafeDumper):
-    def ignore_aliases(self, data):
-        return True
-
-
-def load_yaml_abs(filepath:str):
-    try:
-        with open((filepath), 'r') as file:
-           yamlfile = yaml.safe_load(file)
-    except FileNotFoundError as e:
-        logger.error(f"Error: {e}. Make sure the robot configuration file exists.")
-        return {}
-    except yaml.YAMLError as e:
-        logger.error(f"Error: {e}. Invalid YAML format in the robot configuration file.")
-        return {}
-    return yamlfile
-
-def write_yaml_abs(data, file_path):
-    try:
-        with open(file_path, 'w') as file:
-            yaml.dump(data, file, Dumper=VerboseSafeDumper)
-        logger.info(f"Data has been successfully written to the file: {file_path}")
-    except IOError as e:
-        logger.info(f"IOError occurred while writing the file: {e}")
-    except Exception as e:
-        logger.info(f"An error occurred while writing the file: {e}")

@@ -1,8 +1,12 @@
 
-from dataclasses import asdict, fields
+from dataclasses import fields
+from functools import partial
 from lxml import etree
-from numpy import e, ma
-from robot_builder.base import *
+
+from ..base import Visitor, Component
+from ..elements import *
+from ..utils import filename_handler_magic
+
 
 class URDF_writer(Visitor):
     def __init__(
@@ -341,6 +345,11 @@ class URDF_writer(Visitor):
         if element.reference:
             attrib["reference"] = element.reference
         gazebo_xml = etree.SubElement(config, "gazebo", attrib=attrib)
+
+        self_collide_xml = etree.SubElement(gazebo_xml, "self_collide")
+        if element.self_collide is not None:
+            self_collide_xml.text = str(element.self_collide).lower()
+
         self._writing(gazebo_xml, element)
 
     def visit_gz_plugin(self, config: etree._Element | dict, element: GzPlugin):
@@ -409,19 +418,24 @@ class URDF_writer(Visitor):
 
         material_xml = etree.SubElement(config, "material")
         diffuse_xml = etree.SubElement(material_xml, "diffuse")
-        diffuse_xml.text = str(element.diffuse)
+        if element.diffuse:
+            diffuse_xml.text = " ".join(map(str, element.diffuse))
 
         specular_xml = etree.SubElement(material_xml, "specular")
-        specular_xml.text = str(element.specular)
+        if element.specular:
+            specular_xml.text = " ".join(map(str, element.specular))
 
         ambient_xml = etree.SubElement(material_xml, "ambient")
-        ambient_xml.text = str(element.ambient)
+        if element.ambient:
+            ambient_xml.text = " ".join(map(str, element.ambient))
 
         emissive_xml = etree.SubElement(material_xml, "emissive")
-        emissive_xml.text = str(element.emissive)
+        if element.emissive:
+            emissive_xml.text = " ".join(map(str, element.emissive))
 
         lighting = etree.SubElement(material_xml, "lighting")
-        lighting.text = str(element.lighting)
+        if element.lighting is not None:
+            lighting.text = str(element.lighting).lower()
 
         self._writing(material_xml, element)
 

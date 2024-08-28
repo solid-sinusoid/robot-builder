@@ -46,3 +46,27 @@ class URDFSaveValidationError(URDFError):
     """Raised when XML validation fails when saving."""
 
     pass
+
+
+def validation_handler_strict(errors):
+    """A validation handler that does not allow any errors.
+
+    Args:
+        errors (list[yourdfpy.URDFError]): List of errors.
+
+    Returns:
+        bool: Whether any errors were found.
+    """
+    return len(errors) == 0
+
+
+def validate_required_attribute(errors_list, attribute, error_msg, allowed_values=None):
+    if attribute is None:
+        errors_list.append(URDFIncompleteError(error_msg))
+    elif isinstance(attribute, str) and len(attribute) == 0:
+        errors_list.append(URDFIncompleteError(error_msg))
+
+    if allowed_values is not None and attribute is not None:
+        if attribute not in allowed_values:
+            errors_list.append(URDFAttributeValueError(error_msg))
+            pass

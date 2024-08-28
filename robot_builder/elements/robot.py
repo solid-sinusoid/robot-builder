@@ -1,28 +1,12 @@
-from dataclasses import field
-from pydantic.dataclasses import dataclass
+from dataclasses import dataclass, field
+
 from lxml import etree
 
-# from loguru import logger
-import numpy as np
-
-from .base import Component, Visitor
-from .ros2_control_interface import Ros2Control
+from ..base import Component, Visitor
+from .gazebo import Gazebo
 from .joint import Joint
 from .link import Link, Material
-from .gazebo import Gazebo
-
-# @dataclass(eq=False)
-# class Group(Component):
-#     links: list[Link] = field(default_factory=list)
-#     joints: list[Joint] = field(default_factory=list)
-#     materials: list[Material] = field(default_factory=list)
-#     gazebo: list[str] = field(default_factory=list)
-#     control: list[Ros2Control] = field(default_factory=list)
-#
-#     def visit(self, config: etree._Element | dict, visitor: Visitor):
-#         return super().visit(config, visitor)
-
-
+from .ros2_control_interface import Ros2Control
 
 
 @dataclass(eq=False)
@@ -35,11 +19,11 @@ class Robot(Component):
     gazebo: list[Gazebo] = field(default_factory=list)
 
     @property
-    def link_map(self) -> dict:
+    def link_map(self) -> dict[str, Link]:
         return self._link_map
 
     @property
-    def joint_map(self) -> dict:
+    def joint_map(self) -> dict[str, Joint]:
         return self._joint_map
 
     @property
@@ -79,11 +63,11 @@ class Robot(Component):
         return total_num_dofs
 
     @property
-    def zero_cfg(self):
-        return np.zeros(self.num_dofs)
+    def zero_cfg(self) -> list[float]:
+        return [0] * self.num_dofs
 
     @property
-    def cfg(self):
+    def cfg(self) -> list[float]:
         return self._cfg
 
     @property
@@ -99,8 +83,8 @@ class Robot(Component):
         return self._gripper_joint_names
 
     @property
-    def get_gripper_joint(self) -> list[Joint]:
-        return self._gripper_joint
+    def get_gripper_joints(self) -> list[Joint]:
+        return self._gripper_joints
 
     @property
     def get_gripper_mimic_joint_name(self):
@@ -171,12 +155,12 @@ class Robot(Component):
         self._gripper_joints = []
         self._gripper_joint_names = []
         for link in self.links:
-            name = link.name.split('_')
+            name = link.name.split("_")
             if gripper_keyname in name:
                 self._gripper_link.append(link)
                 self._gripper_link_names.append(link.name)
         for joint in self.joints:
-            name = joint.name.split('_')
+            name = joint.name.split("_")
             if gripper_keyname in name:
                 self._gripper_joints.append(joint)
                 self._gripper_joint_names.append(joint.name)
@@ -185,7 +169,9 @@ class Robot(Component):
                     if mimic_actuated_joint is not None:
                         self.joints.remove(self._joint_map[mimic_actuated_joint])
                         self._gripper_mimic_joint_name = joint.mimic.joint
-                        self._gripper_mimic_joint = self._joint_map[mimic_actuated_joint]
+                        self._gripper_mimic_joint = self._joint_map[
+                            mimic_actuated_joint
+                        ]
                     else:
                         raise ValueError("Determine mimic joint name")
         # for control in self._control_map:
@@ -195,7 +181,7 @@ class Robot(Component):
         #         self.gripper.control.append(c)
         #         self.control.remove(c)
 
-    def extend(self, other: 'Robot'):
+    def extend(self, other: "Robot"):
         self.links.extend(other.links)
         self.joints.extend(other.joints)
         self.materials.extend(other.materials)
@@ -211,14 +197,13 @@ class Robot(Component):
         self._cfg = self.zero_cfg
 
         self.parallel_gripper = False
-        self.multifinger_gropper = False
+        self.multifinger_gripper = False
 
         if self._gripper_joint_names and self._gripper_mimic_joint_name:
             self.parallel_gripper = True
 
         elif self._gripper_joint_names and not self._gripper_mimic_joint_name:
-            self.multifinger_gropper = True
+            self.multifinger_gripper = True
 
-    def visit(self, config, visitor: Visitor):
+    def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_robot(config, self)
-

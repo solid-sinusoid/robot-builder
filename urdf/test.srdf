@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<robot name="arm0">
+  <group name="arm0">
+    <chain base_link="base_link" tip_link="tool0"/>
+  </group>
+  <group_state name="home" group="arm0">
+    <joint name="${tf_prefix}ee_link_joint" value="0" />
+    <joint name="${tf_prefix}fork0_link_joint" value="0" />
+    <joint name="${tf_prefix}fork1_link_joint" value="0" />
+    <joint name="${tf_prefix}fork2_link_joint" value="0" />
+    <joint name="${tf_prefix}main0_link_joint" value="0" />
+    <joint name="${tf_prefix}main1_link_joint" value="0" />
+  </group_state>
+  <disable_collisions link1="base_link" link2="fork0_link" reason="Adjacent"/>
+  <disable_collisions link1="ee_link" link2="fork2_link" reason="Adjacent"/>
+  <disable_collisions link1="fork0_link" link2="fork1_link" reason="Never"/>
+  <disable_collisions link1="fork0_link" link2="main0_link" reason="Adjacent"/>
+  <disable_collisions link1="fork1_link" link2="fork2_link" reason="Never"/>
+  <disable_collisions link1="fork1_link" link2="main0_link" reason="Adjacent"/>
+  <disable_collisions link1="fork1_link" link2="main1_link" reason="Adjacent"/>
+  <disable_collisions link1="fork2_link" link2="main1_link" reason="Adjacent"/>
+  <disable_collisions link1="ee_link" link2="_gripper_base_link" reason="Adjacent"/>
+  <disable_collisions link1="_rot_base_link" link2="_l_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="_rot_base_link" link2="_r_finger_link" reason="Adjacent"/>
+  <disable_collisions link1="_rot_base_link" link2="_gripper_base_link" reason="Adjacent"/>
+  <disable_collisions link1="_r_finger_link" link2="_l_finger_link" reason="Adjacent"/>
+</robot>

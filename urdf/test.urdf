@@ -296,13 +296,6 @@
     <limit effort="10.0" velocity="0.53" lower="0.0" upper="0.064"/>
     <mimic joint="rbs_gripper_r_finger_joint" multiplier="1.0" offset="0.0"/>
   </joint>
-  <joint type="prismatic">
-    <parent link="rbs_gripper_rot_base_link"/>
-    <child link="rbs_gripper_r_finger_link"/>
-    <origin xyz="0.0 0.0 0.1071" rpy="0.0 0.0 -1.5708"/>
-    <axis xyz="-1.0 0.0 0.0"/>
-    <limit effort="10.0" velocity="0.53" lower="0.0" upper="0.064"/>
-  </joint>
   <joint type="fixed">
     <parent link="rbs_gripper_rot_base_link"/>
     <child link="gripper_grasp_point"/>
@@ -423,4 +416,174 @@
       <state_interface name="torque.z"/>
     </sensor>
   </ros2_control>
+  <gazebo reference="base_link">
+    <self_collide/>
+    <visual>
+      <material>
+        <diffuse>0.8 0.8 0.8 1.0</diffuse>
+        <specular>0.6 0.6 0.6 1.0</specular>
+        <ambient>1.0 1.0 1.0</ambient>
+        <emissive>0.0 0.0 0.0 1.0</emissive>
+        <lighting>true</lighting>
+        <pbr>
+          <metal>
+            <albedo_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/base_link_d.png</albedo_map>
+            <normal_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/base_link_n.png</normal_map>
+            <ambient_occlusion_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/base_link_ao.png</ambient_occlusion_map>
+            <roughness_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/base_link_r.png</roughness_map>
+          </metal>
+        </pbr>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="fork0_link">
+    <self_collide/>
+    <visual>
+      <material>
+        <diffuse>0.8 0.8 0.8 1.0</diffuse>
+        <specular>0.6 0.6 0.6 1.0</specular>
+        <ambient>1.0 1.0 1.0</ambient>
+        <emissive>0.0 0.0 0.0 1.0</emissive>
+        <lighting>true</lighting>
+        <pbr>
+          <metal>
+            <albedo_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_d.png</albedo_map>
+            <normal_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_n.png</normal_map>
+            <ambient_occlusion_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_ao.png</ambient_occlusion_map>
+            <roughness_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_r.png</roughness_map>
+          </metal>
+        </pbr>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="main0_link">
+    <self_collide/>
+    <visual>
+      <material>
+        <diffuse>0.8 0.8 0.8 1.0</diffuse>
+        <specular>0.6 0.6 0.6 1.0</specular>
+        <ambient>1.0 1.0 1.0</ambient>
+        <emissive>0.0 0.0 0.0 1.0</emissive>
+        <lighting>true</lighting>
+        <pbr>
+          <metal>
+            <albedo_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/main_link_d.png</albedo_map>
+            <normal_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/main_link_n.png</normal_map>
+            <ambient_occlusion_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/main_link_ao.png</ambient_occlusion_map>
+            <roughness_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/main_link_r.png</roughness_map>
+          </metal>
+        </pbr>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="fork1_link">
+    <self_collide/>
+    <visual>
+      <material>
+        <diffuse>0.8 0.8 0.8 1.0</diffuse>
+        <specular>0.6 0.6 0.6 1.0</specular>
+        <ambient>1.0 1.0 1.0</ambient>
+        <emissive>0.0 0.0 0.0 1.0</emissive>
+        <lighting>true</lighting>
+        <pbr>
+          <metal>
+            <albedo_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_d.png</albedo_map>
+            <normal_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_n.png</normal_map>
+            <ambient_occlusion_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_ao.png</ambient_occlusion_map>
+            <roughness_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_r.png</roughness_map>
+          </metal>
+        </pbr>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="main1_link">
+    <self_collide/>
+    <visual>
+      <material>
+        <diffuse>0.8 0.8 0.8 1.0</diffuse>
+        <specular>0.6 0.6 0.6 1.0</specular>
+        <ambient>1.0 1.0 1.0</ambient>
+        <emissive>0.0 0.0 0.0 1.0</emissive>
+        <lighting>true</lighting>
+        <pbr>
+          <metal>
+            <albedo_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/main_link_d.png</albedo_map>
+            <normal_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/main_link_n.png</normal_map>
+            <ambient_occlusion_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/main_link_ao.png</ambient_occlusion_map>
+            <roughness_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/main_link_r.png</roughness_map>
+          </metal>
+        </pbr>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="fork2_link">
+    <self_collide/>
+    <visual>
+      <material>
+        <diffuse>0.8 0.8 0.8 1.0</diffuse>
+        <specular>0.6 0.6 0.6 1.0</specular>
+        <ambient>1.0 1.0 1.0</ambient>
+        <emissive>0.0 0.0 0.0 1.0</emissive>
+        <lighting>true</lighting>
+        <pbr>
+          <metal>
+            <albedo_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_d.png</albedo_map>
+            <normal_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_n.png</normal_map>
+            <ambient_occlusion_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_ao.png</ambient_occlusion_map>
+            <roughness_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/fork_r.png</roughness_map>
+          </metal>
+        </pbr>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="ee_link">
+    <self_collide/>
+    <visual>
+      <material>
+        <diffuse>0.8 0.8 0.8 1.0</diffuse>
+        <specular>0.6 0.6 0.6 1.0</specular>
+        <ambient>1.0 1.0 1.0</ambient>
+        <emissive>0.0 0.0 0.0 1.0</emissive>
+        <lighting>true</lighting>
+        <pbr>
+          <metal>
+            <albedo_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/ee_link_d.png</albedo_map>
+            <normal_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/ee_link_n.png</normal_map>
+            <ambient_occlusion_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/ee_link_ao.png</ambient_occlusion_map>
+            <roughness_map>/home/bill-finger/rbs_ws/install/rbs_arm/share/rbs_arm/materials/textures/ee_link_r.png</roughness_map>
+          </metal>
+        </pbr>
+      </material>
+    </visual>
+  </gazebo>
+  <gazebo reference="rbs_gripper_rot_base_link">
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="rbs_gripper_l_finger_link">
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="rbs_gripper_r_finger_link">
+    <self_collide>true</self_collide>
+  </gazebo>
+  <gazebo reference="tool0_joint">
+    <self_collide/>
+    <sensor name="fts_sensor" type="force_torque">
+      <always_on>True</always_on>
+      <update_rate>50</update_rate>
+      <visualize>True</visualize>
+      <topic>ft_data</topic>
+      <force_torque>
+        <frame>sensor</frame>
+        <measure_direction>child_to_parent</measure_direction>
+      </force_torque>
+    </sensor>
+  </gazebo>
+  <gazebo>
+    <self_collide/>
+    <plugin name="ign_ros2_control::IgnitionROS2ControlPlugin" filename="libign_ros2_control-system.so">
+      <ros>
+        <namespace>/arm0</namespace>
+      </ros>
+    </plugin>
+  </gazebo>
 </robot>

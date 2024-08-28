@@ -1,18 +1,17 @@
-from dataclasses import field
-from pydantic.dataclasses import dataclass
-from pydantic import ConfigDict
-from lxml import etree
-import numpy as np
-from .base import Component, Visitor, ComponentConfig
-
-
+from dataclasses import dataclass, field
 from typing import Annotated, Literal, TypeVar
+
+import numpy as np
 import numpy.typing as npt
+from lxml import etree
+
+from ..base import Component, Visitor
 
 DType = TypeVar("DType", bound=np.generic)
 Array3 = Annotated[npt.NDArray[DType], Literal[3]]
 
-@dataclass(config=ComponentConfig.config)
+
+@dataclass
 class Origin(Component):
     xyz: Array3[np.float32] | None = None
     rpy: Array3[np.float32] | None = None
@@ -20,27 +19,14 @@ class Origin(Component):
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_origin(config, self)
 
-    # def build(self, config: dict, visitor: Visitor):
-    #     positon = config.get("position", {})
-    #     if positon:
-    #         pos = []
-    #         for key in positon:
-    #             pos.append(positon[key])
-    #         self.xyz = np.array(pos)
-    #     orientation = config.get("orientation", {})
-    #     if orientation:
-    #         orient = []
-    #         for key in orientation:
-    #             orient.append(orientation[key])
-    #         self.rpy = np.array(orient)
 
-
-@dataclass(config=ComponentConfig.config)
+@dataclass
 class Scale(Component):
     scale: Array3[np.float32] | None | float = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_scale(config, self)
+
 
 @dataclass
 class Sphere(Component):
@@ -48,6 +34,7 @@ class Sphere(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_sphere(config, self)
+
 
 @dataclass
 class Cylinder(Component):
@@ -57,12 +44,14 @@ class Cylinder(Component):
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_cylinder(config, self)
 
-@dataclass(config=ComponentConfig.config)
+
+@dataclass
 class Box(Component):
     size: Array3[np.float32] | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_box(config, self)
+
 
 @dataclass
 class Mesh(Component):
@@ -86,12 +75,21 @@ class Geometry(Component):
     def is_composite(self) -> bool:
         return True
 
-@dataclass(config=ComponentConfig.config)
+
+@dataclass
 class Color(Component):
+    """
+    Color class
+
+    Args:
+        rgba: np.ndarray | None = None
+            color description
+    """
     rgba: np.ndarray | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_color(config, self)
+
 
 @dataclass
 class Texture(Component):
@@ -103,12 +101,13 @@ class Texture(Component):
 
 @dataclass
 class Material(Component):
-    name: str | None = None
-    color: Color | None = None
-    texture: Texture | None = None
+    name: str = field(default_factory=str)
+    color: Color = field(default_factory=Color)
+    texture: Texture = field(default_factory=Texture)
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_material(config, self)
+
 
 @dataclass
 class Visual(Component):
@@ -120,6 +119,7 @@ class Visual(Component):
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_visual(config, self)
 
+
 @dataclass
 class Collision(Component):
     name: str | None = None
@@ -129,10 +129,8 @@ class Collision(Component):
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_collision(config, self)
 
-    def is_composite(self) -> bool:
-        return True
 
-@dataclass(config=ComponentConfig.config)
+@dataclass
 class Inertia(Component):
     inertia_tensor: np.ndarray | None = None
 
@@ -150,20 +148,20 @@ class Mass(Component):
 
 @dataclass
 class Inertial(Component):
-    origin: Origin | None = None
-    mass: Mass | None = None
-    inertia: Inertia | None = None 
+    origin: Origin = field(default_factory=Origin)
+    mass: Mass = field(default_factory=Mass)
+    inertia: Inertia = field(default_factory=Inertia)
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_inertial(config, self)
 
+
 @dataclass
 class Link(Component):
-    name: str
-    inertial: Inertial | None = None
+    name: str = field(default_factory=str)
+    inertial: Inertial = field(default_factory=Inertial)
     visuals: list[Visual] = field(default_factory=list)
     collisions: list[Collision] = field(default_factory=list)
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         visitor.visit_link(config, self)
-

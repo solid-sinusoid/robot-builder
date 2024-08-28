@@ -1,5 +1,3 @@
-
-
 from robot_builder.parser import URDF_parser
 from robot_builder.writer import URDF_writer
 

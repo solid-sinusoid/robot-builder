@@ -1,12 +1,16 @@
 import os
-from typing import Type
-import six
-import numpy as np
 from functools import partial
-from robot_builder.base import *
-from loguru import logger
+from typing import Type
 
+import numpy as np
+import six
+from loguru import logger
 from lxml import etree
+
+from ..base import Component, Visitor
+from ..elements import *
+from ..utils import filename_handler_magic, str2float
+
 
 class URDF_parser(Visitor):
     def __init__(
@@ -54,23 +58,23 @@ class URDF_parser(Visitor):
                 ):
                     # Remove a namespace URI in the element's name
                     # elem.tag = etree.QName(elem).localname
-                    if action == "end" and ":" in elem.tag: # pyright: ignore[]
-                        elem.getparent().remove(elem) # pyright: ignore[]
+                    if action == "end" and ":" in elem.tag:  # pyright: ignore[]
+                        elem.getparent().remove(elem)  # pyright: ignore[]
 
             if xml.root is None:
                 raise RuntimeError("XML root is empty")
             xml_root = xml.root
 
         # Remove comments
-        etree.strip_tags(xml_root, etree.Comment) # pyright: ignore[]
-        etree.cleanup_namespaces(xml_root) # pyright: ignore[]
+        etree.strip_tags(xml_root, etree.Comment)  # pyright: ignore[]
+        etree.cleanup_namespaces(xml_root)  # pyright: ignore[]
         # Create and configure the URDF_visitr
 
         robot = Robot(name=xml_root.attrib["name"])  # Adjust as needed
         urdf_parser = URDF_parser(
             robot=robot,
             mesh_dir=kwargs.get("mesh_dir", ""),
-            filename_handler=kwargs.get("filename_handler", None)
+            filename_handler=kwargs.get("filename_handler", None),
         )
 
         # Process the robot using Visitor pattern
@@ -78,7 +82,6 @@ class URDF_parser(Visitor):
         robot.init()
 
         return robot
-
 
     def visit_mimic(self, config: etree._Element | dict, element: Mimic):
         if not isinstance(config, etree._Element):
@@ -88,7 +91,9 @@ class URDF_parser(Visitor):
         element.multiplier = str2float(config.get("multiplier", 1.0))
         element.offset = str2float(config.get("offset", 0.0))
 
-    def visit_safety_controller(self, config: etree._Element | dict, element: SafetyController):
+    def visit_safety_controller(
+        self, config: etree._Element | dict, element: SafetyController
+    ):
         if not isinstance(config, etree._Element):
             return NotImplemented
 
@@ -101,7 +106,7 @@ class URDF_parser(Visitor):
         if not isinstance(config, etree._Element):
             return NotImplemented
         # In case the element uses comma as a separator
-        size = config.get("size", default="0 0 0").replace(',', ' ')
+        size = config.get("size", default="0 0 0").replace(",", " ")
         element.size = np.array(list(map(float, size.split())))
 
     def visit_cylinder(self, config: etree._Element | dict, element: Cylinder):
@@ -119,7 +124,7 @@ class URDF_parser(Visitor):
         if not isinstance(config, etree._Element):
             return NotImplemented
         element.scale = None
-        s = config.get("scale", default="").replace(',', ' ').split()
+        s = config.get("scale", default="").replace(",", " ").split()
         if s is not None:
             match len(s):
                 case 0:
@@ -135,8 +140,6 @@ class URDF_parser(Visitor):
         element.filename = config.get("filename")
 
         self.visit_and_add("scale", config, Scale, element)
-        if not isinstance(config, etree._Element):
-            return NotImplemented
 
     def visit_geometry(self, config: etree._Element | dict, element: Geometry):
         if not isinstance(config, etree._Element):
@@ -207,7 +210,7 @@ class URDF_parser(Visitor):
     def visit_inertia(self, config: etree._Element | dict, element: Inertia):
         if not isinstance(config, etree._Element):
             return NotImplemented
-        element.inertia_tensor =  np.array(
+        element.inertia_tensor = np.array(
             [
                 [
                     config.get("ixx", default=1.0),
@@ -255,21 +258,19 @@ class URDF_parser(Visitor):
             collision.visit(c, self)
             element.add(collision)
 
-
     def visit_axis(self, config: etree._Element | dict, element: Axis):
         if not isinstance(config, etree._Element):
             return NotImplemented
         xyz = config.get("xyz", "1 0 0")
         element.axis = np.array(list(map(float, xyz.split())))
 
-
     def visit_limit(self, config: etree._Element | dict, element: Limit):
         if not isinstance(config, etree._Element):
             return NotImplemented
-        element.effort=str2float(config.get("effort", default=None))
-        element.velocity=str2float(config.get("velocity", default=None))
-        element.lower=str2float(config.get("lower", default=None))
-        element.upper=str2float(config.get("upper", default=None))
+        element.effort = str2float(config.get("effort", default=None))
+        element.velocity = str2float(config.get("velocity", default=None))
+        element.lower = str2float(config.get("lower", default=None))
+        element.upper = str2float(config.get("upper", default=None))
 
     def visit_dynamics(self, config: etree._Element | dict, element: Dynamics):
         if not isinstance(config, etree._Element):
@@ -289,7 +290,7 @@ class URDF_parser(Visitor):
 
         parent_xml = config.find("parent")
         if parent_xml is not None:
-            parent_link_name = parent_xml.get("link") 
+            parent_link_name = parent_xml.get("link")
             for l in self.robot.links:
                 if l.name == parent_link_name:
                     element.parent = l.name
@@ -333,13 +334,10 @@ class URDF_parser(Visitor):
             element.add(gazebo)
 
         for r in config.findall("ros2_control"):
-            r2c = Ros2Control(
-                name=r.attrib["name"],
-                type=r.attrib["type"])
+            r2c = Ros2Control(name=r.attrib["name"], type=r.attrib["type"])
 
             r2c.visit(r, self)
             element.add(r2c)
-
 
     def visit_ros2_control(self, config: etree._Element | dict, element: Ros2Control):
         if not isinstance(config, etree._Element):
@@ -356,7 +354,9 @@ class URDF_parser(Visitor):
             element.add(sensor)
             sensor.visit(s, self)
 
-    def visit_joint_interface(self, config: etree._Element | dict, element: JointInterface):
+    def visit_joint_interface(
+        self, config: etree._Element | dict, element: JointInterface
+    ):
         if not isinstance(config, etree._Element):
             return NotImplemented
 
@@ -370,7 +370,9 @@ class URDF_parser(Visitor):
             command_interace.visit(ci, self)
             element.add(command_interace)
 
-    def visit_state_interface(self, config: etree._Element | dict, element: StateInterface):
+    def visit_state_interface(
+        self, config: etree._Element | dict, element: StateInterface
+    ):
         if not isinstance(config, etree._Element):
             return NotImplemented
 
@@ -378,7 +380,9 @@ class URDF_parser(Visitor):
             param = Param(name=p.attrib["name"], value=p.text)
             element.add(param)
 
-    def visit_command_interface(self, config: etree._Element | dict, element: CommandInterface):
+    def visit_command_interface(
+        self, config: etree._Element | dict, element: CommandInterface
+    ):
         if not isinstance(config, etree._Element):
             return NotImplemented
 
@@ -394,7 +398,6 @@ class URDF_parser(Visitor):
             state_interface = StateInterface(name=si.attrib["name"])
             state_interface.visit(si, self)
             element.add(state_interface)
-
 
     def visit_hardware(self, config: etree._Element | dict, element: Hardware):
         if not isinstance(config, etree._Element):
@@ -424,10 +427,7 @@ class URDF_parser(Visitor):
             s_name = s.get("name")
             s_type = s.get("type")
             if s_name and s_type:
-                sensor = GzSensor(
-                    name = s_name,
-                    type = s_type
-                )
+                sensor = GzSensor(name=s_name, type=s_type)
                 sensor.visit(s, self)
                 element.add(sensor)
 
@@ -454,8 +454,6 @@ class URDF_parser(Visitor):
     def visit_gz_sensor(self, config: etree._Element | dict, element: GzSensor):
         if isinstance(config, dict):
             return NotImplemented
-
-
 
         always_on = config.find("always_on")
         if always_on is not None:
@@ -523,13 +521,13 @@ class URDF_parser(Visitor):
     def visit_gz_pbr(self, config: etree._Element | dict, element: GzPbr):
         if isinstance(config, dict):
             return NotImplemented
-        
+
         self.visit_and_add("metal", config, GzPbrMetal, element)
 
     def visit_gz_pbr_metal(self, config: etree._Element | dict, element: GzPbrMetal):
         if isinstance(config, dict):
             return NotImplemented
-        
+
         albedo = config.findtext("albedo_map")
         if albedo is not None:
             element.albedo_map = albedo
@@ -554,9 +552,13 @@ class URDF_parser(Visitor):
         if namespace is not None:
             element.namespace = namespace
 
-
-
-    def visit_and_add(self, tag: str, config: etree._Element | dict, child: Type[Component], parent: Component):
+    def visit_and_add(
+        self,
+        tag: str,
+        config: etree._Element | dict,
+        child: Type[Component],
+        parent: Component,
+    ):
         if not isinstance(config, etree._Element):
             return NotImplemented
         component_xml = config.find(tag)
@@ -564,4 +566,3 @@ class URDF_parser(Visitor):
             component = child()
             component.visit(component_xml, self)
             parent.add(component)
-

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any
-from robot_builder.base import Robot
+from ..elements import Robot
+
 
 class RobotBuilderABC(ABC):
     @property
@@ -13,7 +13,9 @@ class RobotBuilderABC(ABC):
         pass
 
     @abstractmethod
-    def gripper(self, gripper_package: str | None, save_geometry_path: str | None) -> None:
+    def gripper(
+        self, gripper_package: str | None, save_geometry_path: str | None
+    ) -> None:
         pass
 
     @abstractmethod

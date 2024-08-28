@@ -1,17 +1,18 @@
-from pydantic.dataclasses import dataclass
-from lxml import etree
+from dataclasses import dataclass
+
 import numpy as np
 
+from ..base import Component, Visitor
 from .link import Origin
-# from .utils import array_eq, str2float
-from .base import Component, Visitor, ComponentConfig
 
-@dataclass(config=ComponentConfig.config)
+
+@dataclass
 class Axis(Component):
     axis: np.ndarray | None = None
 
     def visit(self, config, visitor: Visitor):
         visitor.visit_axis(config, self)
+
 
 @dataclass
 class Mimic(Component):
@@ -21,6 +22,7 @@ class Mimic(Component):
 
     def visit(self, config, visitor: Visitor):
         visitor.visit_mimic(config, self)
+
 
 @dataclass
 class SafetyController(Component):
@@ -52,6 +54,7 @@ class Limit(Component):
     def visit(self, config, visitor: Visitor):
         visitor.visit_limit(config, self)
 
+
 @dataclass
 class Calibration(Component):
     rising: float | None = None
@@ -67,6 +70,7 @@ class GazeboReference(Component):
 
     def visit(self, config, visitor: Visitor):
         return super().visit(config, visitor)
+
 
 @dataclass
 class Joint(Component):
