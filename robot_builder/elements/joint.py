@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
 import numpy as np
+from lxml import etree
 
-from ..base import Component, Visitor
+from ..base.base import Visitor
+from ..base.component import Component
 from .link import Origin
 
 
@@ -10,7 +12,10 @@ from .link import Origin
 class Axis(Component):
     axis: np.ndarray | None = None
 
-    def visit(self, config, visitor: Visitor):
+    def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_axis(config, self)
 
 
@@ -20,7 +25,10 @@ class Mimic(Component):
     multiplier: float | None = None
     offset: float | None = None
 
-    def visit(self, config, visitor: Visitor):
+    def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_mimic(config, self)
 
 
@@ -31,7 +39,10 @@ class SafetyController(Component):
     k_position: float | None = None
     k_velocity: float | None = None
 
-    def visit(self, config, visitor: Visitor):
+    def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_safety_controller(config, self)
 
 
@@ -40,7 +51,10 @@ class Dynamics(Component):
     damping: float | None = None
     friction: float | None = None
 
-    def visit(self, config, visitor: Visitor):
+    def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_dynamics(config, self)
 
 
@@ -51,7 +65,10 @@ class Limit(Component):
     lower: float | None = None
     upper: float | None = None
 
-    def visit(self, config, visitor: Visitor):
+    def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_limit(config, self)
 
 
@@ -60,7 +77,10 @@ class Calibration(Component):
     rising: float | None = None
     falling: float | None = None
 
-    def visit(self, config, visitor: Visitor):
+    def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_calibration(config, self)
 
 
@@ -68,7 +88,10 @@ class Calibration(Component):
 class GazeboReference(Component):
     name: str
 
-    def visit(self, config, visitor: Visitor):
+    def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         return super().visit(config, visitor)
 
 
@@ -86,5 +109,8 @@ class Joint(Component):
     calibration: Calibration | None = None
     safety_controller: SafetyController | None = None
 
-    def visit(self, config, visitor: Visitor):
+    def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_joint(config, self)

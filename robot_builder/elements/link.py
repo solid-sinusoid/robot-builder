@@ -5,10 +5,12 @@ import numpy as np
 import numpy.typing as npt
 from lxml import etree
 
-from ..base import Component, Visitor
+from ..base.base import Visitor
+from ..base.component import Component
 
 DType = TypeVar("DType", bound=np.generic)
 Array3 = Annotated[npt.NDArray[DType], Literal[3]]
+Array4 = Annotated[npt.NDArray[DType], Literal[4]]
 
 
 @dataclass
@@ -17,6 +19,9 @@ class Origin(Component):
     rpy: Array3[np.float32] | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_origin(config, self)
 
 
@@ -25,14 +30,20 @@ class Scale(Component):
     scale: Array3[np.float32] | None | float = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_scale(config, self)
 
 
 @dataclass
 class Sphere(Component):
-    radius: float
+    radius: float | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_sphere(config, self)
 
 
@@ -42,6 +53,9 @@ class Cylinder(Component):
     length: float | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_cylinder(config, self)
 
 
@@ -50,6 +64,9 @@ class Box(Component):
     size: Array3[np.float32] | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_box(config, self)
 
 
@@ -59,6 +76,9 @@ class Mesh(Component):
     scale: Scale | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_mesh(config, self)
 
 
@@ -70,6 +90,9 @@ class Geometry(Component):
     mesh: Mesh | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_geometry(config, self)
 
     def is_composite(self) -> bool:
@@ -85,9 +108,12 @@ class Color(Component):
         rgba: np.ndarray | None = None
             color description
     """
-    rgba: np.ndarray | None = None
+    rgba: Array4[np.float32] | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_color(config, self)
 
 
@@ -96,16 +122,22 @@ class Texture(Component):
     filename: str | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_texture(config, self)
 
 
 @dataclass
 class Material(Component):
-    name: str = field(default_factory=str)
-    color: Color = field(default_factory=Color)
-    texture: Texture = field(default_factory=Texture)
+    name: str | None = None
+    color: Color | None = None
+    texture: Texture | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_material(config, self)
 
 
@@ -117,6 +149,9 @@ class Visual(Component):
     material: Material | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_visual(config, self)
 
 
@@ -127,6 +162,9 @@ class Collision(Component):
     origin: Origin | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_collision(config, self)
 
 
@@ -135,33 +173,45 @@ class Inertia(Component):
     inertia_tensor: np.ndarray | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_inertia(config, self)
 
 
-@dataclass
-class Mass(Component):
-    value: float | None = None
-
-    def visit(self, config: etree._Element | dict, visitor: Visitor):
-        visitor.visit_mass(config, self)
+# @dataclass
+# class Mass(Component):
+#     value: float | None = None
+#
+#     def visit(self, config: etree._Element | dict, visitor: Visitor):
+#         from ..base.robot import RobotVisitor
+#         if not isinstance(visitor, RobotVisitor):
+#             raise ValueError("Type is not supported by this method")
+#         visitor.visit_mass(config, self)
 
 
 @dataclass
 class Inertial(Component):
-    origin: Origin = field(default_factory=Origin)
-    mass: Mass = field(default_factory=Mass)
-    inertia: Inertia = field(default_factory=Inertia)
+    origin: Origin | None = None
+    mass: float | None = None
+    inertia: Inertia | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_inertial(config, self)
 
 
 @dataclass
 class Link(Component):
-    name: str = field(default_factory=str)
-    inertial: Inertial = field(default_factory=Inertial)
+    name: str
+    inertial: Inertial | None = None
     visuals: list[Visual] = field(default_factory=list)
     collisions: list[Collision] = field(default_factory=list)
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_link(config, self)

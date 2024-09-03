@@ -1,21 +1,53 @@
 import os
 from functools import partial
-from typing import Type
 
 import numpy as np
 import six
-import toml
 from loguru import logger
 from lxml import etree
 
-from ..base import Component, Visitor
-from ..elements import *
+from ..base.robot import RobotVisitor
+
+# from ..elements.gazebo import Gazebo
+from ..elements.joint import (
+    Axis,
+    Calibration,
+    Dynamics,
+    Joint,
+    Limit,
+    Mimic,
+    SafetyController,
+)
+from ..elements.link import (
+    Box,
+    Collision,
+    Color,
+    Cylinder,
+    Geometry,
+    Inertia,
+    Inertial,
+    Link,
+    # Mass,
+    Material,
+    Mesh,
+    Origin,
+    Scale,
+    Sphere,
+    Texture,
+    Visual,
+)
+from ..elements.robot import Robot
+
+# from ..elements.ros2_control_interface import Ros2Control
 from ..utils import filename_handler_magic
 
-# _logger = logging.getLogger(__name__)
+# from .gazebo import GazeboUrdfParser
+# from .ros2_control import Ros2ControlUrdfParser
+from yaml import load as load_yaml
+from yaml import CLoader as Loader
 
 
-class RobotConfigParser(Visitor):
+class RobotConfigParser(RobotVisitor):
     def __init__(
         self,
         robot: Robot,
@@ -37,16 +69,17 @@ class RobotConfigParser(Visitor):
             if not os.path.isfile(fname_or_file):
                 raise ValueError("{} is not a file".format(fname_or_file))
 
-            if not "mesh_dir" in kwargs:
+            if not "mesh_dir" not in kwargs:
                 kwargs["mesh_dir"] = os.path.dirname(fname_or_file)
 
         try:
-            config = toml.load(fname_or_file)
-            if "robot_name" in kwargs:
-                robot_names = kwargs["robot_name"]
-            else:
-                robots = config.get("robots", "")
-                robot_names = robots.keys()
+            with open(fname_or_file, "r") as file:
+                config = load_yaml(file, Loader=Loader)
+                if "robot_name" in kwargs:
+                    robot_names = kwargs["robot_name"]
+                else:
+                    robots = config.get("robots", "")
+                    robot_names = robots.keys()
             # parser = etree.XMLParser(remove_blank_text=True)
             # tree = etree.parse(fname_or_file, parser=parser)
             # xml_root = tree.getroot()
@@ -131,7 +164,7 @@ class RobotConfigParser(Visitor):
             return NotImplemented
 
         element.filename = config.get("filename")
-        self.visit_and_add(config.get("scale", None), Scale, element)
+        self.visit_and_add(config.get("scale", {"value": 1.0}), Scale, element)
 
     def visit_geometry(self, config: etree._Element | dict, element: Geometry):
         if not isinstance(config, dict):
@@ -155,8 +188,8 @@ class RobotConfigParser(Visitor):
         if not isinstance(config, dict):
             return NotImplemented
 
-        position = config.get("position", {})
-        orientation = config.get("orientation", {})
+        position = config.get("position", {"x": 0.0, "y": 0.0, "z": 0.0})
+        orientation = config.get("orientation", {"r": 0.0, "p": 0.0, "y": 0.0})
 
         element.xyz = np.array(
             [position.get("x", 0.0), position.get("y", 0.0), position.get("z", 0.0)]
@@ -193,7 +226,7 @@ class RobotConfigParser(Visitor):
             return NotImplemented
         element.name = config.get("name", None)
 
-        self.visit_and_add(config.get("origin", None), Origin, element)
+        self.visit_and_add(config.get("origin", {}), Origin, element)
         self.visit_and_add(config.get("visual", None), Geometry, element)
         self.visit_and_add(config.get("material", None), Material, element)
 
@@ -202,7 +235,7 @@ class RobotConfigParser(Visitor):
             return NotImplemented
         element.name = config.get("name", None)
 
-        self.visit_and_add(config.get("origin", None), Origin, element)
+        self.visit_and_add(config.get("origin", {}), Origin, element)
         self.visit_and_add(config.get("collision", None), Geometry, element)
 
     def visit_inertia(self, config: etree._Element | dict, element: Inertia):
@@ -229,18 +262,19 @@ class RobotConfigParser(Visitor):
             dtype=np.float64,
         )
 
-    def visit_mass(self, config: etree._Element | dict, element: Mass):
-        if not isinstance(config, dict):
-            return NotImplemented
-        element.value = config.get("value", None)
+    # def visit_mass(self, config: etree._Element | dict, element: Mass):
+    #     if not isinstance(config, dict):
+    #         return NotImplemented
+    #     element.value = config.get("value", None)
 
     def visit_inertial(self, config: etree._Element | dict, element: Inertial):
         if not isinstance(config, dict):
             return NotImplemented
 
+        element.mass = config.get("mass", None)
         self.visit_and_add(config.get("origin", None), Origin, element)
         self.visit_and_add(config.get("inertia", None), Inertia, element)
-        self.visit_and_add(config.get("mass", None), Mass, element)
+        # self.visit_and_add(config.get("mass", None), Mass, element)
 
     def visit_link(self, config: etree._Element | dict, element: Link):
         if not isinstance(config, dict):
@@ -250,7 +284,14 @@ class RobotConfigParser(Visitor):
         self.visit_and_add(config.get("geometry", None), Visual, element)
         self.visit_and_add(config.get("geometry", None), Collision, element)
 
+    #FIXME: better implementation of different types, as in the Scale, for example.
     def visit_axis(self, config: etree._Element | dict, element: Axis):
+
+        if isinstance(config, list):
+            if len(config) == 3:
+                element.axis = np.array(config)
+            else:
+                raise ValueError("List type shoud contain only 3 items")
         if not isinstance(config, dict):
             return NotImplemented
         xyz = config.get("xyz", [1, 0, 0])
@@ -278,9 +319,19 @@ class RobotConfigParser(Visitor):
     def visit_joint(self, config: etree._Element | dict, element: Joint):
         if not isinstance(config, dict):
             return NotImplemented
+
         element.type = config.get("type", "fixed")
-        # For fixed link origin is only needed
-        if not config.get("axis") and element.type == "fixed":
+
+        # Находим конкретные имена родительского и дочернего звена на основе их типов
+        parent_type = config.get("parent")
+        child_type = config.get("child")
+
+        # Поиск имени родительского и дочернего звена по их типам
+        element.parent = self.link_instances.get(parent_type)
+        element.child = self.link_instances.get(child_type)
+
+        # Обрабатываем необходимые элементы в зависимости от типа шарнира
+        if element.type == "fixed" and not config.get("axis"):
             self.visit_and_add(config, Origin, element)
         else:
             self.visit_and_add(config.get("origin", None), Origin, element)
@@ -289,12 +340,7 @@ class RobotConfigParser(Visitor):
             self.visit_and_add(config.get("dynamics", None), Dynamics, element)
             self.visit_and_add(config.get("mimic", None), Mimic, element)
             self.visit_and_add(config.get("calibration", None), Calibration, element)
-            self.visit_and_add(
-                config.get("safety_controller", None), SafetyController, element
-            )
-
-        element.parent = self.robot.links[-2].name
-        element.child = self.robot.links[-1].name
+            self.visit_and_add(config.get("safety_controller", None), SafetyController, element)
 
     def visit_robot(self, config: etree._Element | dict, element: Robot):
         if not isinstance(config, dict):
@@ -304,54 +350,42 @@ class RobotConfigParser(Visitor):
         if not links:
             raise ValueError("Please provide links information")
 
-        try:
-            parent = config["robots"][element.name]["parent"]
-        except Exception as e:
-            logger.error(f"Parent link of Robot isn't set using default value: world")
-            parent = "world"
+        frames = config.get("flames", {})
 
-        link = Link(name=f"{parent}")
+        # Определяем родительское звено для робота
+        parent = config["robots"].get(element.name, {}).get("parent", "world")
+        
+        link = Link(name=parent)
         element.add(link)
-        for i, l_name in enumerate(config["robots"][element.name]["links"]):
-            link = Link(name=f"{element.name}_{l_name}_{i}")
-            element.add(link)
-            if l_name in config["links"]:
-                link.visit(config["links"][l_name], self)
+
+        # Создаем словарь для хранения соответствий типа и конкретных экземпляров имен
+        self.link_instances = {}
+
+        structure = config["robots"][element.name].get("structure", [])
+        for i, link_type in enumerate(structure):
+            if link_type not in links and link_type not in frames:
+                raise ValueError(f"Please describe [{link_type}] in your config file")
+
+            link_name = f"{element.name}_{link_type}_{i}"
+            new_link = Link(name=link_name)
+            element.add(new_link)
+
+            self.link_instances[link_type] = new_link.name
+
+            joint_name = f"{element.name}_{parent}_{link_type}_{i}_joint"
+            joint = Joint(name=joint_name)
+            joint.parent = parent
+            joint.child = new_link.name
+            element.add(joint)
+
+            for config_joint in config.get("joints", []):
+                if config_joint["child"] == link_type and config_joint["parent"] == parent:
+                    joint.visit(config_joint, self)
+                    break
             else:
-                link.visit(config["anchor"][l_name], self)
+                joint.type = config.get("joint_type", "fixed")
+                self.visit_and_add(config, Origin, joint)
 
-            # TODO: A better way to do this choise
-            # If i = 0 then create joint from robot parent to robot root
-            if i == 0:
-                joint = Joint(name=f"{element.name}_{parent}_{link.name}_{i}_joint")
-                element.add(joint)
-                joint.visit(config["anchor"][parent], self)
-            else:
-                if l_name in config["links"]:
-                    joint = Joint(name=f"{element.name}_{parent}_{link.name}_{i}_joint")
-                    element.add(joint)
-                    joint.visit(config["links"][l_name]["joint"], self)
-                elif l_name in config["anchor"]:
-                    joint = Joint(name=f"{element.name}_{parent}_{link.name}_{i}_joint")
-                    element.add(joint)
-                    joint.visit(config["anchor"][l_name], self)
+            new_link.visit(config["links"][link_type], self)
 
-            print(i)
-
-            parent = link.name
-        # for j in config.findall("joint"):
-        #     joint = Joint(name=j.attrib["name"])
-        #     joint.visit(j, self)
-        #     element.add(joint)
-
-        # for m in config.findall("material"):
-        #     robot.materials.append(URDF._visit_material(m))
-
-    def visit_and_add(
-        self, config: etree._Element | dict, child: Type[Component], parent: Component
-    ):
-        if not isinstance(config, dict):
-            return NotImplemented
-        component = child()
-        parent.add(component)
-        component.visit(config, self)
+            parent = link_type

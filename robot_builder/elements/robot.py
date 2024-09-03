@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from lxml import etree
 
-from ..base import Component, Visitor
+from ..base.base import Visitor
+from ..base.component import Component
 from .gazebo import Gazebo
 from .joint import Joint
 from .link import Link, Material
@@ -21,6 +23,18 @@ class Robot(Component):
     @property
     def link_map(self) -> dict[str, Link]:
         return self._link_map
+
+    @property
+    def link_names(self) -> list[str]:
+        return [link.name for link in self.links]
+
+    @property
+    def control_map(self) -> dict[str, Ros2Control]:
+        return self._control_map
+
+    @property
+    def control_names(self) -> list[str]:
+        return [control.name for control in self.control]
 
     @property
     def joint_map(self) -> dict[str, Joint]:
@@ -91,7 +105,7 @@ class Robot(Component):
         return self._gripper_mimic_joint_name
 
     def _determine_base_link(self) -> str | None:
-        link_names = [l.name for l in self.links]
+        link_names = [link.name for link in self.links]
         for j in self.joints:
             if j.child is not None:
                 link_names.remove(j.child)
@@ -100,19 +114,14 @@ class Robot(Component):
         return link_names[0]
 
     def _determine_ee_link(self) -> str | None:
-        link_names = [l.name for l in self.links]
-        # for j in self.joints:
-        #     if j.parent is not None:
-        #         link_names.remove(j.parent)
-        # if len(link_names) == 0:
-        #     return None
+        link_names = [link.name for link in self.links]
         return link_names[-1]
 
     def _create_maps(self):
-        self._control_map = {c.name: c for c in self.control}
-        self._material_map = {m.name: m for m in self.materials}
-        self._joint_map = {j.name: j for j in self.joints}
-        self._link_map = {l.name: l for l in self.links}
+        self._control_map = {control.name: control for control in self.control}
+        self._material_map = {material.name: material for material in self.materials}
+        self._joint_map = {joint.name: joint for joint in self.joints}
+        self._link_map = {link.name: link for link in self.links}
 
     def _update_actuated_joints(self):
         self._actuated_joints = []
@@ -136,18 +145,6 @@ class Robot(Component):
                         [dof_indices_cnt, dof_indices_cnt + 1]
                     )
                     dof_indices_cnt += 2
-
-    # def __eq__(self, other):
-    #     if not isinstance(other, Robot):
-    #         return NotImplemented
-    #     return (
-    #         self.name == other.name
-    #         and set(self.links) == set(other.links)
-    #         and set(self.joints) == set(other.joints)
-    #         and set(self.materials) == set(other.materials)
-    #         and set(self.gazebo) == set(other.gazebo)
-    #         and set(self.control) == set(other.control)
-    #     )
 
     def _split_gripper(self, gripper_keyname: str | None = None):
         self._gripper_link = []
@@ -174,12 +171,6 @@ class Robot(Component):
                         ]
                     else:
                         raise ValueError("Determine mimic joint name")
-        # for control in self._control_map:
-        #     c = self._control_map[control]
-        #     name = c.name.split('_')
-        #     if "gripper" in name:
-        #         self.gripper.control.append(c)
-        #         self.control.remove(c)
 
     def extend(self, other: "Robot"):
         self.links.extend(other.links)
@@ -188,9 +179,9 @@ class Robot(Component):
         self.gazebo.extend(other.gazebo)
         self.control.extend(other.control)
 
-    def init(self):
+    def init(self, gripper_prefix: str):
         self._create_maps()
-        self._split_gripper("gripper")
+        self._split_gripper(gripper_prefix)
         self._update_actuated_joints()
         self._base_link = self._determine_base_link()
         self._ee_link = self._determine_ee_link()
@@ -206,4 +197,7 @@ class Robot(Component):
             self.multifinger_gripper = True
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.robot import RobotVisitor
+        if not isinstance(visitor, RobotVisitor):
+            raise ValueError("Type is not supported by this method")
         visitor.visit_robot(config, self)

@@ -1,9 +1,18 @@
-from dataclasses import field
-from pydantic.dataclasses import dataclass
-from ..base import Component, Visitor
+from dataclasses import field, dataclass
 
+# from ..base.base import Visitor
+from ..base.base import Component, Visitor
+from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+#     from ..base.gazebo import GazeboVisitor
+
+from typing import Annotated, Literal, TypeVar
+import numpy as np
+import numpy.typing as npt
 from lxml import etree
 
+DType = TypeVar("DType", bound=np.generic)
+Array2 = Annotated[npt.NDArray[DType], Literal[2]]
 
 @dataclass
 class GzPbrMetal(Component):
@@ -13,6 +22,9 @@ class GzPbrMetal(Component):
     roughness_map: str | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.gazebo import GazeboVisitor
+        if not isinstance(visitor, GazeboVisitor):
+            raise ValueError("Type is not supported for this method")
         visitor.visit_gz_pbr_metal(config, self)
 
 
@@ -21,6 +33,9 @@ class GzPbr(Component):
     metal: GzPbrMetal | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.gazebo import GazeboVisitor
+        if not isinstance(visitor, GazeboVisitor):
+            raise ValueError("Type is not supported for this method")
         visitor.visit_gz_pbr(config, self)
 
 
@@ -34,6 +49,9 @@ class GzMaterial(Component):
     pbr: GzPbr | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.gazebo import GazeboVisitor
+        if not isinstance(visitor, GazeboVisitor):
+            raise ValueError("Type is not supported for this method")
         visitor.visit_gz_material(config, self)
 
 
@@ -42,6 +60,9 @@ class GzVisual(Component):
     material: GzMaterial | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.gazebo import GazeboVisitor
+        if not isinstance(visitor, GazeboVisitor):
+            raise ValueError("Type is not supported for this method")
         visitor.visit_gz_visual(config, self)
 
 
@@ -51,7 +72,16 @@ class GzFts(Component):
     measure_direction: str | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.gazebo import GazeboVisitor
+        if not isinstance(visitor, GazeboVisitor):
+            raise ValueError("Type is not supported for this method")
         visitor.visit_gz_fts(config, self)
+
+@dataclass
+class GzCamera(Component):
+    fov: float | None = None
+    image_size: Array2[np.int16] | None = None
+    clip: Array2[np.float32] | None = None
 
 
 @dataclass
@@ -63,8 +93,12 @@ class GzSensor(Component):
     visualize: bool | None = None
     topic: str | None = None
     force_torque: GzFts | None = None
+    camera: GzCamera | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.gazebo import GazeboVisitor
+        if not isinstance(visitor, GazeboVisitor):
+            raise ValueError("Type is not supported for this method")
         visitor.visit_gz_sensor(config, self)
 
 
@@ -73,6 +107,9 @@ class GzRos(Component):
     namespace: str | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.gazebo import GazeboVisitor
+        if not isinstance(visitor, GazeboVisitor):
+            raise ValueError("Type is not supported for this method")
         visitor.visit_gz_ros(config, self)
 
 
@@ -84,6 +121,9 @@ class GzPlugin(Component):
     ros: GzRos | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.gazebo import GazeboVisitor
+        if not isinstance(visitor, GazeboVisitor):
+            raise ValueError("Type is not supported for this method")
         visitor.visit_gz_plugin(config, self)
 
 
@@ -97,4 +137,7 @@ class Gazebo(Component):
     self_collide: bool | None = None
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
+        from ..base.gazebo import GazeboVisitor
+        if not isinstance(visitor, GazeboVisitor):
+            raise ValueError("Type is not supported for this method")
         visitor.visit_gazebo(config, self)

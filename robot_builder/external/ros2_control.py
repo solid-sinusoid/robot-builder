@@ -1,4 +1,4 @@
-from ..elements import Robot
+from ..elements.robot import Robot
 from ..utils import write_yaml_abs
 
 PARAMETER = "ros__parameters"

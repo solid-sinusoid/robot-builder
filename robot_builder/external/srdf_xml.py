@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from lxml import etree
 
-from robot_builder.base import Component, Visitor
+from ..base.component import Component, VisitorType
 
 
 @dataclass

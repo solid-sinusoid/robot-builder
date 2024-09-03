@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from ..elements import Robot
+from ..elements.robot import Robot
 
 
 class RobotBuilderABC(ABC):

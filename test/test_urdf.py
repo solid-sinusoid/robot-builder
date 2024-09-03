@@ -1,4 +1,4 @@
-from robot_builder.parser import URDF_parser
+from robot_builder.parser.urdf import URDF_parser
 from robot_builder.writer import URDF_writer
 
 robot = URDF_parser.load("/home/bill-finger/rbs_ws/src/robot_builder/urdf/current.urdf")

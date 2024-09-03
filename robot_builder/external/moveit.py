@@ -1,6 +1,8 @@
 import numpy as np
 
-from ..elements import Joint, Link, Robot
+# from ..elements.joint import Joint
+# from ..elements.link import Link
+from ..elements.robot import Robot
 
 # from .srdf_xml import SrdfRobot
 
