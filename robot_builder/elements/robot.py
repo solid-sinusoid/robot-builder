@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 from lxml import etree
 
@@ -41,27 +40,27 @@ class Robot(Component):
         return self._joint_map
 
     @property
-    def joint_names(self):
+    def joint_names(self) -> list[str]:
         return [j.name for j in self.joints]
 
     @property
-    def actuated_joints(self):
+    def actuated_joints(self) -> list[Joint]:
         return self._actuated_joints
 
     @property
-    def actuated_dof_indices(self):
+    def actuated_dof_indices(self) -> list[int]:
         return self._actuated_dof_indices
 
     @property
-    def actuated_joint_indices(self):
+    def actuated_joint_indices(self) -> list[int]:
         return self._actuated_joint_indices
 
     @property
-    def actuated_joint_names(self):
+    def actuated_joint_names(self) -> list[str]:
         return [j.name for j in self._actuated_joints]
 
     @property
-    def num_actuated_joints(self):
+    def num_actuated_joints(self) -> int:
         return len(self.actuated_joints)
 
     @property
@@ -85,35 +84,46 @@ class Robot(Component):
         return self._cfg
 
     @property
-    def base_link(self):
+    def base_link(self) -> str:
         return self._base_link
 
     @property
-    def ee_link(self):
+    def ee_link(self) -> str:
         return self._ee_link
 
     @property
-    def get_gripper_joint_names(self) -> list:
+    def get_gripper_joint_names(self) -> list[str]:
         return self._gripper_joint_names
 
     @property
     def get_gripper_joints(self) -> list[Joint]:
         return self._gripper_joints
 
+    # @property
+    # def get_gripper_mimic_joint_name(self) -> str | None:
+    #     return self._gripper_mimic_joint_name
+
     @property
-    def get_gripper_mimic_joint_name(self):
-        return self._gripper_mimic_joint_name
+    def gripper_actuated_joints(self) -> list[Joint]:
+        return self._gripper_actuated_joints
 
-    def _determine_base_link(self) -> str | None:
-        link_names = [link.name for link in self.links]
-        for j in self.joints:
-            if j.child is not None:
-                link_names.remove(j.child)
-        if len(link_names) == 0:
-            return None
-        return link_names[0]
+    @property
+    def gripper_actuated_joint_names(self) -> list[str]:
+        return [j.name for j in self._gripper_actuated_joints]
 
-    def _determine_ee_link(self) -> str | None:
+    def _determine_base_link(self) -> str:
+        link_names = {link.name for link in self.links if link.name != "world"}
+        child_links = {
+            j.child for j in self.joints if j.child is not None and j.parent != "world"
+        }
+
+        base_links = link_names - child_links
+        if not base_links:
+            raise RuntimeError("Please define link without parents in your URDF")
+
+        return next(iter(base_links))
+
+    def _determine_ee_link(self) -> str:
         link_names = [link.name for link in self.links]
         return link_names[-1]
 
@@ -147,30 +157,39 @@ class Robot(Component):
                     dof_indices_cnt += 2
 
     def _split_gripper(self, gripper_keyname: str | None = None):
-        self._gripper_link = []
-        self._gripper_link_names = []
-        self._gripper_joints = []
-        self._gripper_joint_names = []
-        for link in self.links:
-            name = link.name.split("_")
-            if gripper_keyname in name:
-                self._gripper_link.append(link)
-                self._gripper_link_names.append(link.name)
+        self._gripper_actuated_joints: list[Joint] = []
+        self._gripper_joint_names: list[str] = []
+        self._gripper_links: list[Link] = []
+        self._gripper_joints: list[Joint] = []
+
+        # TODO: Add support for multi-finger grippers and general tools
         for joint in self.joints:
-            name = joint.name.split("_")
-            if gripper_keyname in name:
+            # Process parallel 2-finger gripper
+            if joint.mimic and joint.mimic.joint and joint.type == "prismatic":
+                self.parallel_gripper = True
+                mimiced_joint = self._joint_map[joint.mimic.joint]
+                self._gripper_actuated_joints.extend([mimiced_joint, joint])
+
+            # Identify gripper joints based on key name
+            name_parts = joint.name.split("_")
+            if gripper_keyname in name_parts:
                 self._gripper_joints.append(joint)
-                self._gripper_joint_names.append(joint.name)
-                if joint.mimic:
-                    mimic_actuated_joint = joint.mimic.joint
-                    if mimic_actuated_joint is not None:
-                        self.joints.remove(self._joint_map[mimic_actuated_joint])
-                        self._gripper_mimic_joint_name = joint.mimic.joint
-                        self._gripper_mimic_joint = self._joint_map[
-                            mimic_actuated_joint
-                        ]
-                    else:
-                        raise ValueError("Determine mimic joint name")
+
+        # Remove gripper joints from the robot's joints
+        self.joints = [
+            joint
+            for joint in self.joints
+            if joint not in self._gripper_actuated_joints
+        ]
+
+        # Remove gripper links from the robot's links
+        for link in self.links:
+            name_parts = link.name.split("_")
+            if gripper_keyname in name_parts:
+                self._gripper_links.append(link)
+
+        # Update links after removal
+        self.links = [link for link in self.links if link not in self._gripper_links]
 
     def extend(self, other: "Robot"):
         self.links.extend(other.links)
@@ -187,17 +206,9 @@ class Robot(Component):
         self._ee_link = self._determine_ee_link()
         self._cfg = self.zero_cfg
 
-        self.parallel_gripper = False
-        self.multifinger_gripper = False
-
-        if self._gripper_joint_names and self._gripper_mimic_joint_name:
-            self.parallel_gripper = True
-
-        elif self._gripper_joint_names and not self._gripper_mimic_joint_name:
-            self.multifinger_gripper = True
-
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         from ..base.robot import RobotVisitor
+
         if not isinstance(visitor, RobotVisitor):
             raise ValueError("Type is not supported by this method")
         visitor.visit_robot(config, self)

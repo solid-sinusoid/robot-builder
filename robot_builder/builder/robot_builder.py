@@ -14,7 +14,7 @@ class RobotBuilderABC(ABC):
 
     @abstractmethod
     def gripper(
-        self, gripper_package: str | None, save_geometry_path: str | None
+        self, gripper_package: str | None
     ) -> None:
         pass
 

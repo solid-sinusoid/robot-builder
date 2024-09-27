@@ -167,7 +167,7 @@ def filename_handler_meta(fname, filename_handlers):
     """
     for fn in filename_handlers:
         candidate_fname = fn(fname=fname)
-        logger.debug(f"Checking filename: {candidate_fname}")
+        # logger.debug(f"Checking filename: {candidate_fname}")
         if os.path.isfile(candidate_fname):
             return candidate_fname
     logger.warning(f"Unable to resolve filename: {fname}")
