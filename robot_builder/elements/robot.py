@@ -8,6 +8,7 @@ from .gazebo import Gazebo
 from .joint import Joint
 from .link import Link, Material
 from .ros2_control_interface import Ros2Control
+from robot_builder.elements import link
 
 
 @dataclass(eq=False)
@@ -123,9 +124,30 @@ class Robot(Component):
 
         return next(iter(base_links))
 
-    def _determine_ee_link(self) -> str:
+    def _determine_ee_link(self, ee_link_name: str = "") -> str:
+        # Если задано имя конечного звена, возвращаем его из link_map
+        if ee_link_name and ee_link_name in self.link_map:
+            return self.link_map[ee_link_name].name
+
+        # Получаем список всех звеньев и звеньев захвата
         link_names = [link.name for link in self.links]
-        return link_names[-1]
+        gripper_links = [link.name for link in self._gripper_links]
+
+        # Проверяем последнее звено захвата, если оно существует
+        if gripper_links:
+            last_gripper_link = gripper_links[-1]
+            last_gripper_joint_name = self.link_map[last_gripper_link].name if last_gripper_link in self.link_map else None
+
+            # Проверяем, что связанный джоинт существует и не является фиксированным
+            if last_gripper_joint_name and last_gripper_joint_name in self.joint_map:
+                joint_type = self.joint_map[last_gripper_joint_name].type
+                if joint_type and joint_type != "fixed":
+                    return last_gripper_link
+
+        # Если нет подходящего звена захвата, возвращаем последнее звено робота
+        return link_names[-1] if link_names else ""
+        
+
 
     def _create_maps(self):
         self._control_map = {control.name: control for control in self.control}
@@ -198,12 +220,12 @@ class Robot(Component):
         self.gazebo.extend(other.gazebo)
         self.control.extend(other.control)
 
-    def init(self, gripper_prefix: str):
+    def init(self, gripper_prefix: str, ee_link_name: str = ""):
         self._create_maps()
         self._split_gripper(gripper_prefix)
         self._update_actuated_joints()
         self._base_link = self._determine_base_link()
-        self._ee_link = self._determine_ee_link()
+        self._ee_link = self._determine_ee_link(ee_link_name)
         self._cfg = self.zero_cfg
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):

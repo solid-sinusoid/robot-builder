@@ -686,7 +686,7 @@
   </gazebo>
   <gazebo>
     <plugin filename="libign_ros2_control-system.so" name="ign_ros2_control::IgnitionROS2ControlPlugin">
-      <parameters>/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/config/rbs_arm0_controllers.yaml</parameters>
+      <parameters>/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/config/rbs_arm_controllers.yaml</parameters>
       <ros>
         <namespace>/arm0</namespace>
       </ros>

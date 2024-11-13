@@ -62,9 +62,30 @@ class ControllerManager:
             "cartesian_motion_controller": self.generate_cartesian_motion_controller(),
             "cartesian_force_controller": self.generate_cartesian_force_controller(),
             "joint_effort_controller": self.generate_joint_effort_controller(),
+            "motion_control_handle": self.generate_motion_controller_handle(),
+            "force_torque_sensor_broadcaster": self.generate_force_torque_sensor_broadcaster(),
             "gripper_controller": self.generate_gripper_controller(),
         }
         return {robot_name: robot_config} if robot_name else robot_config
+
+    def generate_motion_controller_handle(self):
+        return {
+            PARAMETER: {
+                "end_effector_link": self.robot.ee_link,
+                "robot_base_link": self.robot.base_link,
+                "ft_sensor_ref_link": "tool0",
+                "controller_name": "cartesian_motion_controller",
+                "joints": self.robot.actuated_joint_names,
+            }
+        }
+
+    def generate_force_torque_sensor_broadcaster(self):
+        return {
+            PARAMETER: {
+                "frame_id": "tool0",
+                "sensor_name": "fts_sensor"
+            }
+        }
 
     def generate_controller_manager(self):
         """
@@ -89,11 +110,14 @@ class ControllerManager:
             "joint_effort_controller": {
                 "type": "effort_controllers/JointGroupEffortController"
             },
+            "motion_control_handle": {
+                "type": "cartesian_controller_handles/MotionControlHandle"
+            }
         }
 
         if self.parallel_gripper:
             controller_manager_params["gripper_controller"] = {
-                "type": "gripper_controller/GripperController"
+                "type": "position_controllers/GripperActionController"
             }
 
         return {PARAMETER: controller_manager_params}
@@ -107,11 +131,30 @@ class ControllerManager:
         dict
             A dictionary containing the configuration for the joint trajectory controller.
         """
+        sin = {
+            name
+            for cont in self.robot.control
+            for ji in cont.joint_interface
+            if ji.name in self.robot.actuated_joint_names
+            for name in ji.get_list_of_state_interface_names
+        }
+
+        cin = {
+            name
+            for cont in self.robot.control
+            for ji in cont.joint_interface
+            if ji.name in self.robot.actuated_joint_names
+            for name in ji.get_list_of_command_interface_names
+        }
+
+        sin_list = list(sin)
+        cin_list = list(cin)
+
         return {
             PARAMETER: {
                 "joints": self.robot.actuated_joint_names,
-                "command_interfaces": ["position"],
-                "state_interfaces": ["position", "velocity"],
+                "command_interfaces": cin_list,
+                "state_interfaces": sin_list,
                 "state_publish_rate": 100.0,
                 "action_monitor_rate": 20.0,
                 "allow_partial_joints_goal": False,
@@ -209,7 +252,7 @@ class ControllerManager:
         return {
             PARAMETER: {
                 "action_monitor_rate": 200.0,
-                "joint": self.robot.get_gripper_mimic_joint_name,
+                "joint": self.robot.gripper_actuated_joint_names[0],
                 "goal_tolerance": 0.01,
                 "max_effort": 5.0,
                 "allow_stalling": False,
@@ -219,7 +262,7 @@ class ControllerManager:
         }
 
     @staticmethod
-    def save_to_yaml(robot: Robot, package_path: str, filename: str):
+    def save_to_yaml(robot: Robot, package_path: str, filename: str, general: bool = True):
         """
         Saves a YAML file for the robot controller configuration.
         Creates an instance of the `ControllerManager` class based on the provided
@@ -233,13 +276,18 @@ class ControllerManager:
             The path to the package where the configuration should be saved.
         filename: str
             The name of the file to save the configuration.
+        general: bool = [True]
+            If true then controller manager configuration will be without namespace
         """
         cm = ControllerManager(
             robot,
             parallel_gripper=robot.parallel_gripper,
-            multifinger_gripper=robot.multifinger_gripper,
         )
 
-        robot_config = cm.generate_robot_config(robot.name)
+        if not general:
+            robot_config = cm.generate_robot_config(robot.name)
+        else:
+            robot_config = cm.generate_robot_config()
+
         filepath = f"{package_path}/config/{filename}"
         write_yaml_abs(robot_config, filepath)

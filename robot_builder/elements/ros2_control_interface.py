@@ -4,6 +4,7 @@ from lxml import etree
 from ..base.base import Visitor
 from ..base.component import Component
 
+
 @dataclass
 class Param(Component):
     name: str
@@ -11,6 +12,7 @@ class Param(Component):
 
     def visit(self, config, visitor: Visitor):
         from ..base.ros2_control import Ros2ControlVisitor
+
         if not isinstance(visitor, Ros2ControlVisitor):
             raise ValueError("Type is not supported by this method")
         visitor.visit_param(config, self)
@@ -23,6 +25,7 @@ class Hardware(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         from ..base.ros2_control import Ros2ControlVisitor
+
         if not isinstance(visitor, Ros2ControlVisitor):
             raise ValueError("Type is not supported by this method")
         visitor.visit_hardware(config, self)
@@ -35,6 +38,7 @@ class CommandInterface(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         from ..base.ros2_control import Ros2ControlVisitor
+
         if not isinstance(visitor, Ros2ControlVisitor):
             raise ValueError("Type is not supported by this method")
         visitor.visit_command_interface(config, self)
@@ -47,6 +51,7 @@ class StateInterface(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         from ..base.ros2_control import Ros2ControlVisitor
+
         if not isinstance(visitor, Ros2ControlVisitor):
             raise ValueError("Type is not supported by this method")
         visitor.visit_state_interface(config, self)
@@ -60,6 +65,7 @@ class Sensor(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         from ..base.ros2_control import Ros2ControlVisitor
+
         if not isinstance(visitor, Ros2ControlVisitor):
             raise ValueError("Type is not supported by this method")
         visitor.visit_sensor(config, self)
@@ -73,9 +79,20 @@ class JointInterface(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         from ..base.ros2_control import Ros2ControlVisitor
+
         if not isinstance(visitor, Ros2ControlVisitor):
             raise ValueError("Type is not supported by this method")
         visitor.visit_joint_interface(config, self)
+
+    @property
+    def get_list_of_command_interface_names(self) -> list[str]:
+        command_interface_names = [ci.name for ci in self.command_interface]
+        return command_interface_names
+
+    @property
+    def get_list_of_state_interface_names(self) -> list[str]:
+        command_interface_names = [ci.name for ci in self.state_interface]
+        return command_interface_names
 
 
 @dataclass
@@ -88,6 +105,7 @@ class Ros2Control(Component):
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
         from ..base.ros2_control import Ros2ControlVisitor
+
         if not isinstance(visitor, Ros2ControlVisitor):
             raise ValueError("Type is not supported by this method")
         visitor.visit_ros2_control(config, self)
