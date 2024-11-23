@@ -221,6 +221,7 @@ class Robot(Component):
         self.control.extend(other.control)
 
     def init(self, gripper_prefix: str, ee_link_name: str = ""):
+        self.parallel_gripper = False
         self._create_maps()
         self._split_gripper(gripper_prefix)
         self._update_actuated_joints()
