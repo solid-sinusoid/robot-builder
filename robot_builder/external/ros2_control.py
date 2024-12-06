@@ -119,7 +119,10 @@ class ControllerManager:
             controller_manager_params["gripper_controller"] = {
                 "type": "position_controllers/GripperActionController"
             }
-
+        if self.multifinger_gripper:
+            controller_manager_params["gripper_controller"] = {
+                "type": "joint_trajectory_controller/JointTrajectoryController"
+            }
         return {PARAMETER: controller_manager_params}
 
     def generate_joint_trajectory_controller(self):
@@ -131,6 +134,7 @@ class ControllerManager:
         dict
             A dictionary containing the configuration for the joint trajectory controller.
         """
+        # filter state_interfaces
         sin = {
             name
             for cont in self.robot.control
@@ -139,6 +143,7 @@ class ControllerManager:
             for name in ji.get_list_of_state_interface_names
         }
 
+        # filter command_interfaces
         cin = {
             name
             for cont in self.robot.control
@@ -147,14 +152,11 @@ class ControllerManager:
             for name in ji.get_list_of_command_interface_names
         }
 
-        sin_list = list(sin)
-        cin_list = list(cin)
-
         return {
             PARAMETER: {
                 "joints": self.robot.actuated_joint_names,
-                "command_interfaces": cin_list,
-                "state_interfaces": sin_list,
+                "command_interfaces": list(cin),
+                "state_interfaces": list(sin),
                 "state_publish_rate": 100.0,
                 "action_monitor_rate": 20.0,
                 "allow_partial_joints_goal": False,
@@ -249,17 +251,49 @@ class ControllerManager:
         dict
             A dictionary containing the configuration for the gripper controller.
         """
-        return {
-            PARAMETER: {
-                "action_monitor_rate": 200.0,
-                "joint": self.robot.gripper_actuated_joint_names[0],
-                "goal_tolerance": 0.01,
-                "max_effort": 5.0,
-                "allow_stalling": False,
-                "stall_velocity_threshold": 0.001,
-                "stall_timeout": 2.0,
+        if self.multifinger_gripper:
+
+            # filter state_interfaces
+            sin = {
+                name
+                for cont in self.robot.control
+                for ji in cont.joint_interface
+                if ji.name in self.robot.gripper_actuated_joint_names
+                for name in ji.get_list_of_state_interface_names
             }
-        }
+
+            # filter command_interfaces
+            cin = {
+                name
+                for cont in self.robot.control
+                for ji in cont.joint_interface
+                if ji.name in self.robot.gripper_actuated_joint_names
+                for name in ji.get_list_of_command_interface_names
+            }
+            return {
+                PARAMETER: {
+                    "joints": self.robot.gripper_actuated_joint_names,
+                    "command_interfaces": list(cin),
+                    "state_interfaces": list(sin),
+                    "state_publish_rate": 100.0,
+                    "action_monitor_rate": 20.0,
+                    "allow_partial_joints_goal": False,
+                }
+            }
+        elif self.parallel_gripper:
+            return {
+                PARAMETER: {
+                    "action_monitor_rate": 200.0,
+                    "joint": self.robot.gripper_actuated_joint_names[0],
+                    "goal_tolerance": 0.01,
+                    "max_effort": 5.0,
+                    "allow_stalling": False,
+                    "stall_velocity_threshold": 0.001,
+                    "stall_timeout": 2.0,
+                }
+            }
+        else:
+            raise RuntimeError("Unsupported gripper type")
 
     @staticmethod
     def save_to_yaml(robot: Robot, package_path: str, filename: str, general: bool = True):
@@ -282,6 +316,7 @@ class ControllerManager:
         cm = ControllerManager(
             robot,
             parallel_gripper=robot.parallel_gripper,
+            multifinger_gripper=robot.multifinger_gripper
         )
 
         if not general:

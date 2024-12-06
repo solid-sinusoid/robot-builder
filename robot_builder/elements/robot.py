@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+from loguru import logger
 from lxml import etree
 
 from ..base.base import Visitor
@@ -8,7 +9,6 @@ from .gazebo import Gazebo
 from .joint import Joint
 from .link import Link, Material
 from .ros2_control_interface import Ros2Control
-from robot_builder.elements import link
 
 
 @dataclass(eq=False)
@@ -183,25 +183,32 @@ class Robot(Component):
         self._gripper_joint_names: list[str] = []
         self._gripper_links: list[Link] = []
         self._gripper_joints: list[Joint] = []
+        self._gripper_mimiced_actuated_joints: list[Joint] = []
 
         # TODO: Add support for multi-finger grippers and general tools
         for joint in self.joints:
-            # Process parallel 2-finger gripper
-            if joint.mimic and joint.mimic.joint and joint.type == "prismatic":
-                self.parallel_gripper = True
-                mimiced_joint = self._joint_map[joint.mimic.joint]
-                self._gripper_actuated_joints.extend([mimiced_joint, joint])
+            if not joint.mimic and joint.type == "prismatic":
+                self._gripper_actuated_joints.extend([joint])
 
             # Identify gripper joints based on key name
             name_parts = joint.name.split("_")
             if gripper_keyname in name_parts:
                 self._gripper_joints.append(joint)
 
+        if len(self._gripper_actuated_joints) == 1:
+            self.parallel_gripper = True
+            logger.info("Gripper type is parallel so the position_controllers/GripperActionController will be selected")
+        elif len(self._gripper_actuated_joints) > 1:
+            self.multifinger_gripper = True
+            logger.info("Gripper type is multifinger so the joint_trajectory_controller will be selected")
+        else:
+            logger.error("Gripper has not actuated joints")
+
         # Remove gripper joints from the robot's joints
         self.joints = [
             joint
             for joint in self.joints
-            if joint not in self._gripper_actuated_joints
+            if joint not in self._gripper_joints
         ]
 
         # Remove gripper links from the robot's links
@@ -222,6 +229,7 @@ class Robot(Component):
 
     def init(self, gripper_prefix: str, ee_link_name: str = ""):
         self.parallel_gripper = False
+        self.multifinger_gripper = False
         self._create_maps()
         self._split_gripper(gripper_prefix)
         self._update_actuated_joints()
