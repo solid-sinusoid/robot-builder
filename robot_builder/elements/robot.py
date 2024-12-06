@@ -125,26 +125,26 @@ class Robot(Component):
         return next(iter(base_links))
 
     def _determine_ee_link(self, ee_link_name: str = "") -> str:
-        # Если задано имя конечного звена, возвращаем его из link_map
+        # If an end-effector link name is specified, return it from the link_map
         if ee_link_name and ee_link_name in self.link_map:
             return self.link_map[ee_link_name].name
 
-        # Получаем список всех звеньев и звеньев захвата
+        # Get a list of all link names and gripper link names
         link_names = [link.name for link in self.links]
         gripper_links = [link.name for link in self._gripper_links]
 
-        # Проверяем последнее звено захвата, если оно существует
+        # Check the last gripper link, if it exists
         if gripper_links:
             last_gripper_link = gripper_links[-1]
             last_gripper_joint_name = self.link_map[last_gripper_link].name if last_gripper_link in self.link_map else None
 
-            # Проверяем, что связанный джоинт существует и не является фиксированным
+            # Verify that the associated joint exists and is not fixed
             if last_gripper_joint_name and last_gripper_joint_name in self.joint_map:
                 joint_type = self.joint_map[last_gripper_joint_name].type
                 if joint_type and joint_type != "fixed":
                     return last_gripper_link
 
-        # Если нет подходящего звена захвата, возвращаем последнее звено робота
+        # If no suitable gripper link is found, return the last link of the robot
         return link_names[-1] if link_names else ""
         
 
@@ -185,15 +185,15 @@ class Robot(Component):
         self._gripper_joints: list[Joint] = []
         self._gripper_mimiced_actuated_joints: list[Joint] = []
 
-        # TODO: Add support for multi-finger grippers and general tools
         for joint in self.joints:
             if not joint.mimic and joint.type == "prismatic":
                 self._gripper_actuated_joints.extend([joint])
 
             # Identify gripper joints based on key name
             name_parts = joint.name.split("_")
-            if gripper_keyname in name_parts:
+            if gripper_keyname in name_parts and not joint.type == "revolute":
                 self._gripper_joints.append(joint)
+
 
         if len(self._gripper_actuated_joints) == 1:
             self.parallel_gripper = True
@@ -201,6 +201,7 @@ class Robot(Component):
         elif len(self._gripper_actuated_joints) > 1:
             self.multifinger_gripper = True
             logger.info("Gripper type is multifinger so the joint_trajectory_controller will be selected")
+            raise ValueError("Check your configuration multifinger gripper currently not supported")
         else:
             logger.error("Gripper has not actuated joints")
 
