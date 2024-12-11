@@ -1,3 +1,4 @@
+import os
 from ..elements.robot import Robot
 from ..utils import write_yaml_abs
 
@@ -37,6 +38,7 @@ class ControllerManager:
         self.robot = robot
         self.parallel_gripper = kwargs.get("parallel_gripper", False)
         self.multifinger_gripper = kwargs.get("multifinger_gripper", False)
+        self.update_rate = kwargs.get("update_rate", 1000)
 
     def generate_robot_config(self, robot_name: str | None = None) -> dict:
         """
@@ -97,7 +99,7 @@ class ControllerManager:
             A dictionary containing the parameters for the controller manager.
         """
         controller_manager_params = {
-            "update_rate": 1000,
+            "update_rate": self.update_rate,
             "joint_state_broadcaster": {
                 "type": "joint_state_broadcaster/JointStateBroadcaster"
             },
@@ -112,6 +114,12 @@ class ControllerManager:
             },
             "motion_control_handle": {
                 "type": "cartesian_controller_handles/MotionControlHandle"
+            },
+            "cartesian_force_controller": {
+                "type": "cartesian_force_controller/CartesianForceController"
+            },
+            "force_torque_sensor_broadcaster": {
+                "type": "force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster"
             }
         }
 
@@ -296,7 +304,7 @@ class ControllerManager:
             raise RuntimeError("Unsupported gripper type")
 
     @staticmethod
-    def save_to_yaml(robot: Robot, package_path: str, filename: str, general: bool = True):
+    def save_to_yaml(robot: Robot, package_path: str, filename: str, update_rate: int = 1000, general: bool = True):
         """
         Saves a YAML file for the robot controller configuration.
         Creates an instance of the `ControllerManager` class based on the provided
@@ -316,7 +324,8 @@ class ControllerManager:
         cm = ControllerManager(
             robot,
             parallel_gripper=robot.parallel_gripper,
-            multifinger_gripper=robot.multifinger_gripper
+            multifinger_gripper=robot.multifinger_gripper,
+            update_rate=update_rate
         )
 
         if not general:
@@ -324,5 +333,5 @@ class ControllerManager:
         else:
             robot_config = cm.generate_robot_config()
 
-        filepath = f"{package_path}/config/{filename}"
-        write_yaml_abs(robot_config, filepath)
+        save_filepath = os.path.join(package_path, "config", filename)
+        write_yaml_abs(robot_config, save_filepath)
