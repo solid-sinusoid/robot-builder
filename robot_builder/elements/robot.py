@@ -203,23 +203,24 @@ class Robot(Component):
             logger.info("Gripper type is multifinger so the joint_trajectory_controller will be selected")
             raise ValueError("Check your configuration multifinger gripper currently not supported")
         else:
-            logger.error("Gripper has not actuated joints")
+            logger.warning("Gripper has not actuated joints")
 
-        # Remove gripper joints from the robot's joints
-        self.joints = [
-            joint
-            for joint in self.joints
-            if joint not in self._gripper_joints
-        ]
+        if not self._gripper_joints:
+            # Remove gripper joints from the robot's joints
+            self.joints = [
+                joint
+                for joint in self.joints
+                if joint not in self._gripper_joints
+            ]
 
-        # Remove gripper links from the robot's links
-        for link in self.links:
-            name_parts = link.name.split("_")
-            if gripper_keyname in name_parts:
-                self._gripper_links.append(link)
+            # Remove gripper links from the robot's links
+            for link in self.links:
+                name_parts = link.name.split("_")
+                if gripper_keyname in name_parts:
+                    self._gripper_links.append(link)
 
-        # Update links after removal
-        self.links = [link for link in self.links if link not in self._gripper_links]
+            # Update links after removal
+            self.links = [link for link in self.links if link not in self._gripper_links]
 
     def extend(self, other: "Robot"):
         self.links.extend(other.links)

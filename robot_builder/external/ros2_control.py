@@ -1,4 +1,6 @@
 import os
+
+from loguru import logger
 from ..elements.robot import Robot
 from ..utils import write_yaml_abs
 
@@ -66,8 +68,11 @@ class ControllerManager:
             "joint_effort_controller": self.generate_joint_effort_controller(),
             "motion_control_handle": self.generate_motion_controller_handle(),
             "force_torque_sensor_broadcaster": self.generate_force_torque_sensor_broadcaster(),
-            "gripper_controller": self.generate_gripper_controller(),
         }
+
+        if self.parallel_gripper or self.multifinger_gripper:
+            robot_config["gripper_controller"] = self.generate_gripper_controller()
+
         return {robot_name: robot_config} if robot_name else robot_config
 
     def generate_motion_controller_handle(self):
@@ -301,7 +306,7 @@ class ControllerManager:
                 }
             }
         else:
-            raise RuntimeError("Unsupported gripper type")
+            logger.warning("Gripper controller will be empty")
 
     @staticmethod
     def save_to_yaml(robot: Robot, package_path: str, filename: str, update_rate: int = 1000, general: bool = True):
