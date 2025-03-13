@@ -64,6 +64,7 @@ class ControllerManager:
             "controller_manager": self.generate_controller_manager(),
             "joint_trajectory_controller": self.generate_joint_trajectory_controller(),
             "cartesian_motion_controller": self.generate_cartesian_motion_controller(),
+            "cartesian_twist_controller": self.generate_cartesian_twist_controller(),
             "cartesian_force_controller": self.generate_cartesian_force_controller(),
             "joint_effort_controller": self.generate_joint_effort_controller(),
             "motion_control_handle": self.generate_motion_controller_handle(),
@@ -74,6 +75,21 @@ class ControllerManager:
             robot_config["gripper_controller"] = self.generate_gripper_controller()
 
         return {robot_name: robot_config} if robot_name else robot_config
+
+    def generate_cartesian_twist_controller(self):
+        return {
+            PARAMETER: {
+                "joints": self.robot.actuated_joint_names,
+                "end_effector_link": self.robot.ee_link,
+                "robot_base_link": self.robot.base_link,
+                "command_interfaces": ["velocity"],
+                "solver": {
+                    "error_scale": 1.0,
+                    "iterations": 10,
+                    "publish_state_feedback": True,
+                },
+            }
+        }
 
     def generate_motion_controller_handle(self):
         return {
@@ -119,6 +135,9 @@ class ControllerManager:
             },
             "motion_control_handle": {
                 "type": "cartesian_controller_handles/MotionControlHandle"
+            },
+            "cartesian_twist_controller": {
+                "type": "cartesian_twist_controller/CartesianTwistController"
             },
             "cartesian_force_controller": {
                 "type": "cartesian_force_controller/CartesianForceController"
