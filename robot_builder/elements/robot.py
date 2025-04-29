@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 from loguru import logger
 from lxml import etree
+from collections import deque
 
 from ..base.base import Visitor
 from ..base.component import Component
@@ -94,7 +95,7 @@ class Robot(Component):
 
     @property
     def get_gripper_joint_names(self) -> list[str]:
-        return self._gripper_joint_names
+        return [j.name for j in self._gripper_joints]
 
     @property
     def get_gripper_joints(self) -> list[Joint]:
@@ -178,49 +179,103 @@ class Robot(Component):
                     )
                     dof_indices_cnt += 2
 
-    def _split_gripper(self, gripper_keyname: str | None = None):
-        self._gripper_actuated_joints: list[Joint] = []
-        self._gripper_joint_names: list[str] = []
-        self._gripper_links: list[Link] = []
-        self._gripper_joints: list[Joint] = []
-        self._gripper_mimiced_actuated_joints: list[Joint] = []
 
+
+    def build_robot_graph(self):
+        graph = {}
         for joint in self.joints:
-            if not joint.mimic and joint.type == "prismatic":
-                self._gripper_actuated_joints.extend([joint])
+            if  joint.parent not in graph:
+                graph[joint.parent] = []
+            if joint.child not in graph:
+                graph[joint.child] = []
+            graph[joint.parent].append((joint.child, joint.type))
+        return graph
 
-            # Identify gripper joints based on key name
-            name_parts = joint.name.split("_")
-            if gripper_keyname in name_parts and not joint.type == "revolute":
-                self._gripper_joints.append(joint)
+    def find_path(self, graph, start, goal):
+        visited = set()
+        path = []
+
+        def dfs(current):
+            if current in visited:
+                return False
+            visited.add(current)
+            path.append(current)
+            if current == goal:
+                return True
+            for neighbor, _ in graph.get(current, []):
+                if dfs(neighbor):
+                    return True
+            path.pop()
+            return False
+
+        dfs(start)
+        return path
+
+    def filter_actuated_joints(self, path, type):
+        pass
+
+    def extract_gripper_links(self, graph, path) -> list:
+        robot_links = set(path)
+        gripper_links = set()
+        for link, connected_links in graph.items():
+            if link not in robot_links and link!="world":
+                gripper_links.add(link)
+            for connected_link in connected_links:
+                if connected_link[0] != "world" and connected_link[0] not in robot_links:
+                    gripper_links.add(connected_link[0])
+        return list(gripper_links)
+
+    def get_joints(self, robot_links, gripper_links):
+        robot_joints = []
+        gripper_joints = []
+        
+        for joint in self.joints:
+            if joint.parent in robot_links and joint.child in robot_links:
+                robot_joints.append(joint)
+            elif joint.parent in gripper_links and joint.child in gripper_links:
+                gripper_joints.append(joint)
+            # джойнты между робот/гриппер или наружу можно игнорировать
+
+        return robot_joints, gripper_joints
+
+    def filter_mimic_joint(self, joints: list[Joint]):
+        filtered_joints = []
+        for joint in joints:
+            if joint.mimic:
+                continue
+            filtered_joints.append(joint)
+        return filtered_joints
+
+    def filter_fixed_joint(self, joints: list[Joint]):
+        filtered_joints = []
+        for joint in joints:
+            if joint.type == "fixed":
+                continue
+            filtered_joints.append(joint)
+        return filtered_joints
+
+    def get_actuated_joints(self, joints: list[Joint]):
+        joints_wo_mimic = self.filter_mimic_joint(joints)
+        joints_wo_fixed = self.filter_fixed_joint(joints_wo_mimic)
+        return joints_wo_fixed
 
 
-        if len(self._gripper_actuated_joints) == 1:
-            self.parallel_gripper = True
-            logger.info("Gripper type is parallel so the position_controllers/GripperActionController will be selected")
-        elif len(self._gripper_actuated_joints) > 1:
-            self.multifinger_gripper = True
-            logger.info("Gripper type is multifinger so the joint_trajectory_controller will be selected")
-            raise ValueError("Check your configuration multifinger gripper currently not supported")
-        else:
-            logger.warning("Gripper has not actuated joints")
+    def _split_gripper(self, ee_link_name: str):
+        robot_graph = self.build_robot_graph()
+        robot_links = self.find_path(robot_graph, "base_link", "grasp_link")
+        gripper_links = self.extract_gripper_links(robot_graph, robot_links)
+        robot_joints, gripper_joints = self.get_joints(robot_links, gripper_links)
+        self._gripper_joints = gripper_joints
+        actuated_robot_joints = self.get_actuated_joints(robot_joints)
+        actuated_gripper_joints = self.get_actuated_joints(gripper_joints)
+        self._gripper_actuated_joints = actuated_gripper_joints
+        self.joints = actuated_robot_joints
+        self._actuated_joints = actuated_robot_joints
 
-        if not self._gripper_joints:
-            # Remove gripper joints from the robot's joints
-            self.joints = [
-                joint
-                for joint in self.joints
-                if joint not in self._gripper_joints
-            ]
+        # print("Robot: ", robot_joints)
+        # print("Gripper: ", gripper_joints)
 
-            # Remove gripper links from the robot's links
-            for link in self.links:
-                name_parts = link.name.split("_")
-                if gripper_keyname in name_parts:
-                    self._gripper_links.append(link)
 
-            # Update links after removal
-            self.links = [link for link in self.links if link not in self._gripper_links]
 
     def extend(self, other: "Robot"):
         self.links.extend(other.links)
@@ -229,14 +284,19 @@ class Robot(Component):
         self.gazebo.extend(other.gazebo)
         self.control.extend(other.control)
 
-    def init(self, gripper_prefix: str, ee_link_name: str = ""):
+    def init(self, base_link_name: str = "", ee_link_name: str = ""):
         self.parallel_gripper = False
         self.multifinger_gripper = False
         self._create_maps()
-        self._split_gripper(gripper_prefix)
-        self._update_actuated_joints()
-        self._base_link = self._determine_base_link()
-        self._ee_link = self._determine_ee_link(ee_link_name)
+        self._split_gripper(ee_link_name)
+        # self._update_actuated_joints()
+        # self._base_link = self._determine_base_link()
+        # if ee_link_name == "":
+        #     self._ee_link = self._determine_ee_link()
+        # else:
+        self._ee_link = ee_link_name
+        self._base_link = base_link_name
+
         self._cfg = self.zero_cfg
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
