@@ -1,7 +1,7 @@
 import os
 
 from loguru import logger
-from ..elements.robot import Robot
+from ..elements.robot import Robot, GripperTypes
 from ..utils import write_yaml_abs
 
 PARAMETER = "ros__parameters"
@@ -38,8 +38,6 @@ class ControllerManager:
                 Indicates whether to use a multifinger gripper.
         """
         self.robot = robot
-        self.parallel_gripper = kwargs.get("parallel_gripper", False)
-        self.multifinger_gripper = kwargs.get("multifinger_gripper", False)
         self.update_rate = kwargs.get("update_rate", 1000)
 
     def generate_robot_config(self, robot_name: str | None = None) -> dict:
@@ -71,7 +69,7 @@ class ControllerManager:
             "force_torque_sensor_broadcaster": self.generate_force_torque_sensor_broadcaster(),
         }
 
-        if self.parallel_gripper or self.multifinger_gripper:
+        if self.robot.gripper_type is not GripperTypes.NONE:
             robot_config["gripper_controller"] = self.generate_gripper_controller()
 
         return {robot_name: robot_config} if robot_name else robot_config
@@ -147,11 +145,11 @@ class ControllerManager:
             }
         }
 
-        if self.parallel_gripper:
+        if self.robot.gripper_type is GripperTypes.PARALLEL:
             controller_manager_params["gripper_controller"] = {
                 "type": "position_controllers/GripperActionController"
             }
-        if self.multifinger_gripper:
+        elif self.robot.gripper_type is GripperTypes.MULTIFINGER:
             controller_manager_params["gripper_controller"] = {
                 "type": "joint_trajectory_controller/JointTrajectoryController"
             }
@@ -283,7 +281,7 @@ class ControllerManager:
         dict
             A dictionary containing the configuration for the gripper controller.
         """
-        if self.multifinger_gripper:
+        if self.robot.gripper_type is GripperTypes.MULTIFINGER:
 
             # filter state_interfaces
             sin = {
@@ -312,7 +310,7 @@ class ControllerManager:
                     "allow_partial_joints_goal": False,
                 }
             }
-        elif self.parallel_gripper:
+        elif self.robot.gripper_type is GripperTypes.PARALLEL:
             return {
                 PARAMETER: {
                     "action_monitor_rate": 200.0,
@@ -347,8 +345,6 @@ class ControllerManager:
         """
         cm = ControllerManager(
             robot,
-            parallel_gripper=robot.parallel_gripper,
-            multifinger_gripper=robot.multifinger_gripper,
             update_rate=update_rate
         )
 

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from enum import Enum
 
 from loguru import logger
 from lxml import etree
@@ -10,6 +11,12 @@ from .gazebo import Gazebo
 from .joint import Joint
 from .link import Link, Material
 from .ros2_control_interface import Ros2Control
+
+class GripperTypes(Enum):
+    NONE = 0
+    PARALLEL = 1
+    MULTIFINGER = 2
+
 
 
 @dataclass(eq=False)
@@ -285,18 +292,15 @@ class Robot(Component):
         self.control.extend(other.control)
 
     def init(self, base_link_name: str = "", ee_link_name: str = ""):
-        self.parallel_gripper = False
-        self.multifinger_gripper = False
         self._create_maps()
         self._split_gripper(ee_link_name)
-        # self._update_actuated_joints()
-        # self._base_link = self._determine_base_link()
-        # if ee_link_name == "":
-        #     self._ee_link = self._determine_ee_link()
-        # else:
+        self.gripper_type = GripperTypes.NONE
+        if len(self.gripper_actuated_joint_names) == 1:
+            self.gripper_type = GripperTypes.PARALLEL
+        elif len(self.gripper_actuated_joint_names) > 1:
+            self.gripper_type = GripperTypes.MULTIFINGER
         self._ee_link = ee_link_name
         self._base_link = base_link_name
-
         self._cfg = self.zero_cfg
 
     def visit(self, config: etree._Element | dict, visitor: Visitor):
