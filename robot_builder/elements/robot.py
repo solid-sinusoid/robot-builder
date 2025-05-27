@@ -241,7 +241,6 @@ class Robot(Component):
                 robot_joints.append(joint)
             elif joint.parent in gripper_links and joint.child in gripper_links:
                 gripper_joints.append(joint)
-            # джойнты между робот/гриппер или наружу можно игнорировать
 
         return robot_joints, gripper_joints
 
@@ -267,9 +266,9 @@ class Robot(Component):
         return joints_wo_fixed
 
 
-    def _split_gripper(self, ee_link_name: str):
+    def _split_gripper(self, base_link_name: str, ee_link_name: str):
         robot_graph = self.build_robot_graph()
-        robot_links = self.find_path(robot_graph, "base_link", "grasp_link")
+        robot_links = self.find_path(robot_graph, base_link_name, ee_link_name)
         gripper_links = self.extract_gripper_links(robot_graph, robot_links)
         robot_joints, gripper_joints = self.get_joints(robot_links, gripper_links)
         self._gripper_joints = gripper_joints
@@ -293,7 +292,7 @@ class Robot(Component):
 
     def init(self, base_link_name: str = "", ee_link_name: str = ""):
         self._create_maps()
-        self._split_gripper(ee_link_name)
+        self._split_gripper(base_link_name, ee_link_name)
         self.gripper_type = GripperTypes.NONE
         if len(self.gripper_actuated_joint_names) == 1:
             self.gripper_type = GripperTypes.PARALLEL
