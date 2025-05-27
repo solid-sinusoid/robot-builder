@@ -101,12 +101,7 @@ class ControllerManager:
         }
 
     def generate_force_torque_sensor_broadcaster(self):
-        return {
-            PARAMETER: {
-                "frame_id": "tool0",
-                "sensor_name": "fts_sensor"
-            }
-        }
+        return {PARAMETER: {"frame_id": "tool0", "sensor_name": "fts_sensor"}}
 
     def generate_controller_manager(self):
         """
@@ -142,12 +137,12 @@ class ControllerManager:
             },
             "force_torque_sensor_broadcaster": {
                 "type": "force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster"
-            }
+            },
         }
 
         if self.robot.gripper_type is GripperTypes.PARALLEL:
             controller_manager_params["gripper_controller"] = {
-                "type": "position_controllers/GripperActionController"
+                "type": "parallel_gripper_action_controller/GripperActionController"
             }
         elif self.robot.gripper_type is GripperTypes.MULTIFINGER:
             controller_manager_params["gripper_controller"] = {
@@ -281,25 +276,25 @@ class ControllerManager:
         dict
             A dictionary containing the configuration for the gripper controller.
         """
+
+        # filter state_interfaces
+        sin = {
+            name
+            for cont in self.robot.control
+            for ji in cont.joint_interface
+            if ji.name in self.robot.gripper_actuated_joint_names
+            for name in ji.get_list_of_state_interface_names
+        }
+
+        # filter command_interfaces
+        cin = {
+            name
+            for cont in self.robot.control
+            for ji in cont.joint_interface
+            if ji.name in self.robot.gripper_actuated_joint_names
+            for name in ji.get_list_of_command_interface_names
+        }
         if self.robot.gripper_type is GripperTypes.MULTIFINGER:
-
-            # filter state_interfaces
-            sin = {
-                name
-                for cont in self.robot.control
-                for ji in cont.joint_interface
-                if ji.name in self.robot.gripper_actuated_joint_names
-                for name in ji.get_list_of_state_interface_names
-            }
-
-            # filter command_interfaces
-            cin = {
-                name
-                for cont in self.robot.control
-                for ji in cont.joint_interface
-                if ji.name in self.robot.gripper_actuated_joint_names
-                for name in ji.get_list_of_command_interface_names
-            }
             return {
                 PARAMETER: {
                     "joints": self.robot.gripper_actuated_joint_names,
@@ -315,6 +310,7 @@ class ControllerManager:
                 PARAMETER: {
                     "action_monitor_rate": 200.0,
                     "joint": self.robot.gripper_actuated_joint_names[0],
+                    "state_interfaces": list(sin),
                     "goal_tolerance": 0.01,
                     "max_effort": 5.0,
                     "allow_stalling": False,
@@ -326,7 +322,13 @@ class ControllerManager:
             logger.warning("Gripper controller will be empty")
 
     @staticmethod
-    def save_to_yaml(robot: Robot, package_path: str, filename: str, update_rate: int = 1000, general: bool = True):
+    def save_to_yaml(
+        robot: Robot,
+        package_path: str,
+        filename: str,
+        update_rate: int = 1000,
+        general: bool = True,
+    ):
         """
         Saves a YAML file for the robot controller configuration.
         Creates an instance of the `ControllerManager` class based on the provided
@@ -343,10 +345,7 @@ class ControllerManager:
         general: bool = [True]
             If true then controller manager configuration will be without namespace
         """
-        cm = ControllerManager(
-            robot,
-            update_rate=update_rate
-        )
+        cm = ControllerManager(robot, update_rate=update_rate)
 
         if not general:
             robot_config = cm.generate_robot_config(robot.name)
