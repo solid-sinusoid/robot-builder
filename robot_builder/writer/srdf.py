@@ -9,6 +9,6 @@ class SrdfParserVisitor:
     def visit_dataclass(self, config: etree._Element, element: Component):
         pass
 
-    def visit_and_add()
+    # def visit_and_add()
 
 
