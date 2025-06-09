@@ -290,14 +290,16 @@ class Robot(Component):
         self.gazebo.extend(other.gazebo)
         self.control.extend(other.control)
 
-    def init(self, base_link_name: str = "", ee_link_name: str = ""):
+    def init(self, base_link_name: str = "", ee_link_name: str = "", merged_gripper_joint: bool = False):
         self._create_maps()
-        self._split_gripper(base_link_name, ee_link_name)
         self.gripper_type = GripperTypes.NONE
-        if len(self.gripper_actuated_joint_names) == 1:
-            self.gripper_type = GripperTypes.PARALLEL
-        elif len(self.gripper_actuated_joint_names) > 1:
-            self.gripper_type = GripperTypes.MULTIFINGER
+        self._update_actuated_joints()
+        if not merged_gripper_joint:
+            self._split_gripper(base_link_name, ee_link_name)
+            if len(self.gripper_actuated_joint_names) == 1:
+                self.gripper_type = GripperTypes.PARALLEL
+            elif len(self.gripper_actuated_joint_names) > 1:
+                self.gripper_type = GripperTypes.MULTIFINGER
         self._ee_link = ee_link_name
         self._base_link = base_link_name
         self._cfg = self.zero_cfg

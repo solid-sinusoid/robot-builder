@@ -101,8 +101,7 @@ class URDF_parser(RobotVisitor):
 
         # Process the robot using Visitor pattern
         robot.visit(xml_root, urdf_parser)
-        robot.init(kwargs.get("base_link_name", ""), kwargs.get("ee_link_name", ""))
-
+        robot.init(kwargs.get("base_link_name", ""), kwargs.get("ee_link_name", ""), kwargs.get("merged_gripper_joint", False))
         return robot
 
     @staticmethod
@@ -156,7 +155,7 @@ class URDF_parser(RobotVisitor):
 
         # Process the robot using Visitor pattern
         robot.visit(xml_root, urdf_parser)
-        robot.init(kwargs.get("base_link_name", ""), kwargs.get("ee_link_name", ""))
+        robot.init(kwargs.get("base_link_name", ""), kwargs.get("ee_link_name", ""), kwargs.get("merged_gripper_joint", False))
 
         return robot
 
