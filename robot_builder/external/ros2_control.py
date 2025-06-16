@@ -5,6 +5,8 @@ from ..elements.robot import Robot, GripperTypes
 from ..utils import write_yaml_abs
 
 PARAMETER = "ros__parameters"
+STATE_IF_ALLOWED    = {"position", "velocity", "acceleration"}
+COMMAND_IF_ALLOWED  = {"position", "velocity", "acceleration", "effort"}
 
 
 class ControllerManager:
@@ -166,6 +168,7 @@ class ControllerManager:
             for ji in cont.joint_interface
             if ji.name in self.robot.actuated_joint_names
             for name in ji.get_list_of_state_interface_names
+            if name in STATE_IF_ALLOWED
         }
 
         # filter command_interfaces
@@ -175,6 +178,7 @@ class ControllerManager:
             for ji in cont.joint_interface
             if ji.name in self.robot.actuated_joint_names
             for name in ji.get_list_of_command_interface_names
+            if name in COMMAND_IF_ALLOWED
         }
 
         return {
