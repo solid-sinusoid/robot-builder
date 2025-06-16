@@ -102,11 +102,11 @@ class Robot(Component):
 
     @property
     def get_gripper_joint_names(self) -> list[str]:
-        return [j.name for j in self._gripper_joints]
+        return getattr(self, "_gripper_joint_names", [])
 
     @property
     def get_gripper_joints(self) -> list[Joint]:
-        return self._gripper_joints
+        return getattr(self, "_gripper_joints", [])
 
     # @property
     # def get_gripper_mimic_joint_name(self) -> str | None:
@@ -114,11 +114,11 @@ class Robot(Component):
 
     @property
     def gripper_actuated_joints(self) -> list[Joint]:
-        return self._gripper_actuated_joints
+        return getattr(self, "_gripper_actuated_joints", [])
 
     @property
     def gripper_actuated_joint_names(self) -> list[str]:
-        return [j.name for j in self._gripper_actuated_joints]
+        return getattr(self, "_gripper_actuated_joint_names", [])
 
     def _determine_base_link(self) -> str:
         link_names = {link.name for link in self.links if link.name != "world"}
@@ -272,9 +272,11 @@ class Robot(Component):
         gripper_links = self.extract_gripper_links(robot_graph, robot_links)
         robot_joints, gripper_joints = self.get_joints(robot_links, gripper_links)
         self._gripper_joints = gripper_joints
+        self._gripper_joint_names = [j.name for j in self._gripper_joints]
         actuated_robot_joints = self.get_actuated_joints(robot_joints)
         actuated_gripper_joints = self.get_actuated_joints(gripper_joints)
         self._gripper_actuated_joints = actuated_gripper_joints
+        self._gripper_actuated_joint_names = [j.name for j in self._gripper_actuated_joints]
         self.joints = actuated_robot_joints
         self._actuated_joints = actuated_robot_joints
 
@@ -296,9 +298,9 @@ class Robot(Component):
         self._update_actuated_joints()
         if not merged_gripper_joint:
             self._split_gripper(base_link_name, ee_link_name)
-            if len(self.gripper_actuated_joint_names) == 1:
+            if len(self._gripper_actuated_joint_names) == 1:
                 self.gripper_type = GripperTypes.PARALLEL
-            elif len(self.gripper_actuated_joint_names) > 1:
+            elif len(self._gripper_actuated_joint_names) > 1:
                 self.gripper_type = GripperTypes.MULTIFINGER
         self._ee_link = ee_link_name
         self._base_link = base_link_name

@@ -10,12 +10,12 @@
     <visual name="base_link_visual">
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/start_link.dae"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/start_link.dae"/>
       </geometry>
     </visual>
     <collision name="base_link_collision">
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/start_link.stl"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/start_link.stl"/>
       </geometry>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
     </collision>
@@ -29,12 +29,12 @@
     <visual name="fork0_link_visual">
       <origin xyz="0.0 -0.0 0.0" rpy="0.0 -0.0 -0.0"/>
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/fork_link.dae"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/fork_link.dae"/>
       </geometry>
     </visual>
     <collision name="fork0_link_collision">
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/fork_link.stl"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/fork_link.stl"/>
       </geometry>
       <origin xyz="0.0 -0.0 0.0" rpy="0.0 0.0 0.0"/>
     </collision>
@@ -48,12 +48,12 @@
     <visual name="main0_link_visual">
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 -0.0"/>
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/main_link.dae"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/main_link.dae"/>
       </geometry>
     </visual>
     <collision name="main0_link_collision">
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/main_link.stl"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/main_link.stl"/>
       </geometry>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
     </collision>
@@ -67,12 +67,12 @@
     <visual name="fork1_link_visual">
       <origin xyz="0.0 -0.0 0.0" rpy="0.0 -0.0 -0.0"/>
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/fork_link.dae"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/fork_link.dae"/>
       </geometry>
     </visual>
     <collision name="fork1_link_collision">
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/fork_link.stl"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/fork_link.stl"/>
       </geometry>
       <origin xyz="0.0 -0.0 0.0" rpy="0.0 0.0 0.0"/>
     </collision>
@@ -86,12 +86,12 @@
     <visual name="main1_link_visual">
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 -0.0"/>
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/main_link.dae"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/main_link.dae"/>
       </geometry>
     </visual>
     <collision name="main1_link_collision">
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/main_link.stl"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/main_link.stl"/>
       </geometry>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
     </collision>
@@ -105,12 +105,12 @@
     <visual name="fork2_link_visual">
       <origin xyz="0.0 -0.0 0.0" rpy="0.0 -0.0 -0.0"/>
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/fork_link.dae"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/fork_link.dae"/>
       </geometry>
     </visual>
     <collision name="fork2_link_collision">
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/fork_link.stl"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/fork_link.stl"/>
       </geometry>
       <origin xyz="0.0 -0.0 0.0" rpy="0.0 0.0 0.0"/>
     </collision>
@@ -125,16 +125,105 @@
     <visual name="ee_link_visual">
       <origin xyz="0.0 -0.0 0.0" rpy="0.0 0.0 0.0"/>
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/ee_link.dae"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/visual/ee_link.dae"/>
       </geometry>
     </visual>
     <collision name="ee_link_collision">
       <geometry>
-        <mesh filename="/home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/ee_link.stl"/>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_arm/share/rbs_arm/meshes/collision/ee_link.stl"/>
       </geometry>
       <origin xyz="0.0 -0.0 0.0" rpy="-0.0 0.0 -0.0"/>
     </collision>
   </link>
+  <link name="rbs_gripper_gripper_base_link">
+    <inertial>
+      <mass value="None"/>
+      <origin xyz="0.000364704367134063 0.0336387482840125 0.0593891203954369" rpy="0.0 0.0 0.0"/>
+      <inertia ixx="0.00107738806534129" ixy="-1.09841172461737e-05" ixz="2.62750043451545e-06" iyy="0.000717388573992299" iyz="-2.95426438182787e-05" izz="0.00115777179755934"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_gripper/share/rbs_gripper/meshes/visual/base.dae"/>
+      </geometry>
+      <material name="rbs_gripper_material">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_gripper/share/rbs_gripper/meshes/collision/base.stl"/>
+      </geometry>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    </collision>
+  </link>
+  <link name="rbs_gripper_rot_base_link">
+    <inertial>
+      <mass value="None"/>
+      <origin xyz="6.79110135283868e-11 -3.80956832067611e-10 0.00775394473595793" rpy="0.0 0.0 0.0"/>
+      <inertia ixx="0.00011089089949771" ixy="5.01335040610636e-06" ixz="1.74608448389267e-14" iyy="0.000105515893695012" iyz="-2.03282362854432e-14" izz="0.000206912001661452"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_gripper/share/rbs_gripper/meshes/visual/rotor.dae"/>
+      </geometry>
+      <material name="rbs_gripper_material">
+        <color rgba="0.250980392156863 0.250980392156863 0.250980392156863 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_gripper/share/rbs_gripper/meshes/collision/rotor.stl"/>
+      </geometry>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    </collision>
+  </link>
+  <link name="rbs_gripper_l_finger_link">
+    <inertial>
+      <mass value="None"/>
+      <origin xyz="0.00399878118534129 0.0187296413885176 -0.0777776233934166" rpy="0.0 0.0 0.0"/>
+      <inertia ixx="4.18533281165612e-05" ixy="-7.11657995951147e-06" ixz="1.81029223490065e-05" iyy="7.89886367868258e-05" iyz="1.20542845942065e-05" izz="5.16740841307935e-05"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_gripper/share/rbs_gripper/meshes/visual/finger.dae"/>
+      </geometry>
+      <material name="rbs_gripper_material">
+        <color rgba="0.752941176470588 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_gripper/share/rbs_gripper/meshes/collision/finger.stl"/>
+      </geometry>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    </collision>
+  </link>
+  <link name="rbs_gripper_r_finger_link">
+    <inertial>
+      <mass value="None"/>
+      <origin xyz="0.0039988 -0.077778 -0.01873" rpy="0.0 0.0 0.0"/>
+      <inertia ixx="4.1853e-05" ixy="1.8103e-05" ixz="7.1166e-06" iyy="5.1674e-05" iyz="-1.2054e-05" izz="7.8989e-05"/>
+    </inertial>
+    <visual>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+      <geometry>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_gripper/share/rbs_gripper/meshes/visual/finger.dae"/>
+      </geometry>
+      <material name="rbs_gripper_material">
+        <color rgba="0.75294 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="file:///home/narmak/rbs_ws/install/rbs_gripper/share/rbs_gripper/meshes/collision/finger.stl"/>
+      </geometry>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    </collision>
+  </link>
+  <link name="gripper_grasp_point"/>
   <joint type="fixed">
     <parent link="world"/>
     <child link="base_link"/>
@@ -198,6 +287,21 @@
     <origin xyz="0.0 0.0 0.10861" rpy="0.0 0.0 0.0"/>
     <axis xyz="0.0 0.0 1.0"/>
     <limit effort="78.0" velocity="0.52" lower="-3.14159" upper="3.14159"/>
+  </joint>
+  <joint type="prismatic">
+    <parent link="rbs_gripper_rot_base_link"/>
+    <child link="rbs_gripper_l_finger_link"/>
+    <origin xyz="0.0 0.0 0.1071" rpy="0.0 0.0 1.5708"/>
+    <axis xyz="-1.0 0.0 0.0"/>
+    <limit effort="10.0" velocity="0.53" lower="0.0" upper="0.064"/>
+    <mimic joint="rbs_gripper_r_finger_joint" multiplier="1.0" offset="0.0"/>
+  </joint>
+  <joint type="prismatic">
+    <parent link="rbs_gripper_rot_base_link"/>
+    <child link="rbs_gripper_r_finger_link"/>
+    <origin xyz="0.0 0.0 0.1071" rpy="0.0 0.0 -1.5708"/>
+    <axis xyz="-1.0 0.0 0.0"/>
+    <limit effort="10.0" velocity="0.53" lower="0.0" upper="0.064"/>
   </joint>
   <joint type="fixed">
     <parent link="rbs_gripper_rot_base_link"/>
