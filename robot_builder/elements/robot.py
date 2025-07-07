@@ -188,7 +188,7 @@ class Robot(Component):
 
 
 
-    def build_robot_graph(self):
+    def _build_robot_graph(self):
         graph = {}
         for joint in self.joints:
             if  joint.parent not in graph:
@@ -198,7 +198,7 @@ class Robot(Component):
             graph[joint.parent].append((joint.child, joint.type))
         return graph
 
-    def find_path(self, graph, start, goal):
+    def _find_path(self, graph, start, goal):
         visited = set()
         path = []
 
@@ -267,8 +267,8 @@ class Robot(Component):
 
 
     def _split_gripper(self, base_link_name: str, ee_link_name: str):
-        robot_graph = self.build_robot_graph()
-        robot_links = self.find_path(robot_graph, base_link_name, ee_link_name)
+        robot_graph = self._build_robot_graph()
+        robot_links = self._find_path(robot_graph, base_link_name, ee_link_name)
         gripper_links = self.extract_gripper_links(robot_graph, robot_links)
         robot_joints, gripper_joints = self.get_joints(robot_links, gripper_links)
         self._gripper_joints = gripper_joints
