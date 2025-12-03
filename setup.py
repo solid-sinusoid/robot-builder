@@ -11,7 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'Logbook'],
     zip_safe=True,
     maintainer='bill-finger',
     maintainer_email='ur.narmak@gmail.com',

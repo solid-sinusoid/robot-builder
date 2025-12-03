@@ -4,7 +4,7 @@ from typing import Any, Mapping
 
 from jinja2 import Environment, Template
 import yaml
-from loguru import logger
+from robot_builder.logger import logger
 from jinja2.runtime import Undefined
 
 def yaml_str(value: Any) -> str:

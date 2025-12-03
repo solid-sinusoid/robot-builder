@@ -1,7 +1,7 @@
 import os
 from functools import partial
 
-from loguru import logger
+from robot_builder.logger import logger
 
 
 def update_mesh_dir(old_path, new_directory):

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 
-from loguru import logger
+from robot_builder.logger import logger
 from lxml import etree
 from collections import deque
 

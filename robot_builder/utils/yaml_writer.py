@@ -1,5 +1,5 @@
 import yaml
-from loguru import logger
+from robot_builder.logger import logger
 
 
 class VerboseSafeDumper(yaml.SafeDumper):

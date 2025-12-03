@@ -3,7 +3,7 @@ from functools import partial
 from typing import Type
 
 import six
-from loguru import logger
+from robot_builder.logger import logger
 from lxml import etree
 
 from robot_builder.base import Component, Visitor
